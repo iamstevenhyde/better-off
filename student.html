@@ -414,7 +414,8 @@
       var proj = safeProject();
       if (proj && proj.firms && proj.firms[MY_ID]) {
         var g = proj.firms[MY_ID].gain;
-        gainEl.textContent = 'If everyone does what they signed: ' + C.signedMoney(g);
+        var anySigned = (DEALS || []).some(function (d) { return d.status === 'confirmed' && (d.terms && d.terms.parties || []).indexOf(MY_ID) >= 0; });
+        gainEl.textContent = anySigned ? 'If everyone does what they signed: ' + C.signedMoney(g) : 'No deals signed yet';
         gainEl.style.borderColor = g >= 0 ? 'var(--accent)' : 'var(--rust)';
       } else {
         gainEl.textContent = 'If everyone does what they signed: ...';
@@ -437,15 +438,17 @@
       '</div></div>';
     html += '<div class="fallback-box">' +
       '<div class="muted" style="font-size:0.8rem;">YOUR FALLBACK</div>' +
-      '<div>' + (card.fallback || []).join(' ') + '</div></div>';
+      '<div>' + (card.fallback || []).join(' ') + '</div>' +
+      '<div class="muted" style="font-size:0.8rem; margin-top:0.3rem;">All money is in thousands: $1,125k means $1.125 million.</div></div>';
     if (C.tierOf(MY_ID) === 'grower') html += renderCropBidBox();
     if (card.fits && card.fits.length) {
-      html += '<div><strong>Your fits:</strong><ul>' + card.fits.map(function (f) {
-        return '<li>Fits well with ' + f.name + ' (' + f.words + ')</li>';
+      var myGood = C.tierOf(MY_ID) === 'grower' ? 'crop' : 'product';
+      html += '<div><strong>Your fits:</strong> <span class="q" title="A fit is extra value the BUYER gets from your ' + myGood + '. The extra goes to them, not you, so ask for a higher price to share in it.">?</span><ul>' + card.fits.map(function (f) {
+        return '<li>' + f.name + ' gets extra value from your ' + myGood + ' (' + f.words + '), so ask for a higher price.</li>';
       }).join('') + '</ul></div>';
     }
     if (card.facts && card.facts.length) {
-      html += '<div class="facts-box"><h3>What you know</h3><ul>' + card.facts.map(function (f) { return '<li>' + C.escapeHtml(f.text || f) + '</li>'; }).join('') + '</ul></div>';
+      html += '<div class="facts-box"><h3>What you know <span class="q" title="True facts about bonuses some firms earn when they deal together. Only a few teams know each one. You can sell a fact, trade it, or keep it. Once you say it out loud, it is free.">?</span></h3><ul>' + card.facts.map(function (f) { return '<li>' + C.escapeHtml(f.text || f) + '</li>'; }).join('') + '</ul></div>';
     }
     // ownFragment: this firm's own partial piece of a combo it's IN (engine8,
     // COMBOS-v8.md) -- a hint about its own hidden bonus, in the same plain,
@@ -508,7 +511,7 @@
   // functions existing ("Engine loading..." until engine8 ships them), same
   // policy as 'sell' had in round 1. ----
   var DEAL_TYPES = ['sell', 'chain', 'fact', 'pool'];
-  var DEAL_TYPE_LABEL = { sell: 'Sell crops/products', chain: 'Three-way chain', fact: 'Sell a fact', pool: 'Merge profits' };
+  var DEAL_TYPE_LABEL = { sell: 'Buy or sell', chain: 'Three-way chain', fact: 'Sell a fact', pool: 'Merge profits' };
   // Fallback one-liners for CONST.TEMPLATES[type].help until engine8 ships
   // it -- plain copy only, no business logic, so safe to default locally.
   var DEAL_TYPE_HELP_FALLBACK = {
@@ -517,7 +520,14 @@
     fact: 'Sell something you know to another firm.',
     pool: 'Merge profits with another firm: add up your gains and split them by a percentage you both agree on.'
   };
+  var SELL_HELP_BY_TIER = {
+    grower: 'Sell your crops to a processor, at a price you both see.',
+    processor: 'Buy crops from a grower, or sell your products to a retailer, at a price you both see.',
+    retailer: 'Buy products from a processor, at a price you both see.'
+  };
+  function penaltyText(v) { return v > 0 ? C.money(v) : 'None ($0)'; }
   function typeHelpText(type) {
+    if (type === 'sell' && SELL_HELP_BY_TIER[C.tierOf(MY_ID)]) return SELL_HELP_BY_TIER[C.tierOf(MY_ID)];
     var e = engine();
     var t = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES[type];
     return (t && t.help) || DEAL_TYPE_HELP_FALLBACK[type] || '';
@@ -719,17 +729,18 @@
     if (dealDraft.qty == null || dealDraft.qty < S.qty[0] || dealDraft.qty > S.qty[1]) dealDraft.qty = S.qty[3];
     var qtyFixed = S.qty[0] === S.qty[1];
     var html = '';
-    html += '<div class="slider-row"><label>How many<span class="valout">' + dealDraft.qty + (qtyFixed ? ' (fixed)' : '') + '</span></label>' +
+    var unitWord = dir.good === 'crop' ? 'crops' : 'products';
+    html += '<div class="slider-row"><label>How many ' + unitWord + (qtyFixed ? '' : ' (1 or ' + S.qty[1] + ')') + '<span class="valout">' + dealDraft.qty + (qtyFixed ? ' (only 1 possible)' : '') + '</span></label>' +
       '<input type="range" id="qtySlider" min="' + S.qty[0] + '" max="' + S.qty[1] + '" step="' + S.qty[2] + '" value="' + dealDraft.qty + '"' + (qtyFixed ? ' disabled' : '') + '></div>';
     html += '<div class="slider-row"><label>Price (per ' + dir.good + ')<span class="valout" id="priceOut">' + C.money(dealDraft.price) + '</span></label>' +
       '<input type="range" id="priceSlider" min="' + S.price[0] + '" max="' + S.price[1] + '" step="' + S.price[2] + '" value="' + dealDraft.price + '"></div>';
-    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="penaltyOut">' + C.money(dealDraft.penalty) + '</span></label>' +
+    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="penaltyOut">' + penaltyText(dealDraft.penalty) + '</span></label>' +
       '<input type="range" id="penaltySlider" min="' + S.penalty[0] + '" max="' + S.penalty[1] + '" step="' + S.penalty[2] + '" value="' + dealDraft.penalty + '"></div>';
     html += '<div class="deal-preview" id="dealPreview"></div>';
     box.innerHTML = html;
     document.getElementById('qtySlider').addEventListener('input', function () { dealDraft.qty = parseInt(this.value, 10); renderPreview(); });
     document.getElementById('priceSlider').addEventListener('input', function () { dealDraft.price = parseInt(this.value, 10); document.getElementById('priceOut').textContent = C.money(dealDraft.price); renderPreview(); });
-    document.getElementById('penaltySlider').addEventListener('input', function () { dealDraft.penalty = parseInt(this.value, 10); document.getElementById('penaltyOut').textContent = C.money(dealDraft.penalty); renderPreview(); });
+    document.getElementById('penaltySlider').addEventListener('input', function () { dealDraft.penalty = parseInt(this.value, 10); document.getElementById('penaltyOut').textContent = penaltyText(dealDraft.penalty); renderPreview(); });
     renderPreview();
   }
 
@@ -769,7 +780,7 @@
       '<input type="range" id="cropPriceSlider" min="' + R.crop.price[0] + '" max="' + R.crop.price[1] + '" step="' + R.crop.price[2] + '" value="' + dealDraft.cropPrice + '"></div>';
     html += '<div class="slider-row"><label>Product price<span class="valout" id="productPriceOut">' + C.money(dealDraft.productPrice) + '</span></label>' +
       '<input type="range" id="productPriceSlider" min="' + R.product.price[0] + '" max="' + R.product.price[1] + '" step="' + R.product.price[2] + '" value="' + dealDraft.productPrice + '"></div>';
-    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="chainPenaltyOut">' + C.money(dealDraft.chainPenalty) + '</span></label>' +
+    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="chainPenaltyOut">' + penaltyText(dealDraft.chainPenalty) + '</span></label>' +
       '<input type="range" id="chainPenaltySlider" min="' + R.penalty[0] + '" max="' + R.penalty[1] + '" step="' + R.penalty[2] + '" value="' + dealDraft.chainPenalty + '"></div>';
     html += '<div class="deal-preview" id="dealPreview"></div>';
     box.innerHTML = html;
@@ -778,7 +789,7 @@
     });
     document.getElementById('cropPriceSlider').addEventListener('input', function () { dealDraft.cropPrice = parseInt(this.value, 10); document.getElementById('cropPriceOut').textContent = C.money(dealDraft.cropPrice); renderPreview(); });
     document.getElementById('productPriceSlider').addEventListener('input', function () { dealDraft.productPrice = parseInt(this.value, 10); document.getElementById('productPriceOut').textContent = C.money(dealDraft.productPrice); renderPreview(); });
-    document.getElementById('chainPenaltySlider').addEventListener('input', function () { dealDraft.chainPenalty = parseInt(this.value, 10); document.getElementById('chainPenaltyOut').textContent = C.money(dealDraft.chainPenalty); renderPreview(); });
+    document.getElementById('chainPenaltySlider').addEventListener('input', function () { dealDraft.chainPenalty = parseInt(this.value, 10); document.getElementById('chainPenaltyOut').textContent = penaltyText(dealDraft.chainPenalty); renderPreview(); });
     renderPreview();
   }
 
@@ -847,12 +858,12 @@
         sentence = dir.from === MY_ID
           ? partnerName + ' buys ' + dealDraft.qty + ' ' + good + ' from you at ' + C.money(dealDraft.price) + ' each'
           : 'You buy ' + dealDraft.qty + ' ' + good + ' from ' + partnerName + ' at ' + C.money(dealDraft.price) + ' each';
-        sentence += dealDraft.penalty > 0 ? '; whoever breaks pays ' + C.money(dealDraft.penalty) + '.' : '; breaking it costs nothing.';
+        sentence += dealDraft.penalty > 0 ? '; whoever breaks pays ' + C.money(dealDraft.penalty) + '.' : '. No penalty, so either side can back out at secret orders for free.';
       }
     } else if (dealDraft.type === 'chain' && dealDraft.chainGrower && dealDraft.chainProcessor && dealDraft.chainRetailer && dealDraft.cropPrice != null && dealDraft.productPrice != null) {
       sentence = cardName(dealDraft.chainGrower) + ' sells its crop to ' + cardName(dealDraft.chainProcessor) + ' for ' + C.money(dealDraft.cropPrice) +
         '; ' + cardName(dealDraft.chainProcessor) + ' sells the product to ' + cardName(dealDraft.chainRetailer) + ' for ' + C.money(dealDraft.productPrice) +
-        (dealDraft.chainPenalty > 0 ? '; whoever breaks either part pays ' + C.money(dealDraft.chainPenalty) + '.' : '; breaking it costs nothing.');
+        (dealDraft.chainPenalty > 0 ? '; whoever breaks either part pays ' + C.money(dealDraft.chainPenalty) + '.' : '. No penalty, so anyone can back out at secret orders for free.');
     } else if (dealDraft.type === 'fact' && dealDraft.partner && dealDraft.fact) {
       var myCard = safeCardFor(MY_ID);
       var f = ((myCard && myCard.facts) || []).filter(function (x) { return x.id === dealDraft.fact; })[0];

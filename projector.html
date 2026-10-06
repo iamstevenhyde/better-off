@@ -280,7 +280,7 @@
     var pct = (proj && proj.roomPct) || 0;
     document.getElementById('roomPct').textContent = pct + '%';
     var e = engine();
-    var goal = GAME.world.room_goal || (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 40;
+    var goal = GAME.world.room_goal || (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 65;
     var reached = pct >= goal;
     var fill = document.getElementById('goalBarFill');
     fill.style.width = Math.min(100, pct) + '%';

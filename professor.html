@@ -150,7 +150,7 @@
   document.getElementById('newGameBtn').addEventListener('click', function () {
     var code = C.genJoinCode();
     var e = engine();
-    var roomGoalDefault = (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 40;
+    var roomGoalDefault = (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 65;
     var world = { v: 8, rev: 0, phase: 'lobby', deals_started_at: null, deals_minutes: 25, orders_started_at: null, orders_minutes: 4, room_goal: roomGoalDefault, ai_covered: [], result: null, writer: null };
     supa.from('weed_games').insert({ join_code: code, status: 'active', phase: 'lobby', season: 1, world: world })
       .select().single().then(function (res) {
@@ -241,7 +241,7 @@
     document.getElementById('runPhase').textContent = GAME.phase;
     if (document.activeElement !== document.getElementById('roomGoalInput')) {
       var e2 = engine();
-      document.getElementById('roomGoalInput').value = GAME.world.room_goal || (e2 && e2.CONST && e2.CONST.ROOM_GOAL_DEFAULT) || 40;
+      document.getElementById('roomGoalInput').value = GAME.world.room_goal || (e2 && e2.CONST && e2.CONST.ROOM_GOAL_DEFAULT) || 65;
     }
     if (document.activeElement !== document.getElementById('dealsMinutes')) document.getElementById('dealsMinutes').value = GAME.world.deals_minutes || 25;
     if (document.activeElement !== document.getElementById('ordersMinutes')) document.getElementById('ordersMinutes').value = GAME.world.orders_minutes || 4;
@@ -482,7 +482,7 @@
     });
 
     document.getElementById('roomGoalSave').addEventListener('click', function () {
-      var pct = parseFloat(document.getElementById('roomGoalInput').value) || 40;
+      var pct = parseFloat(document.getElementById('roomGoalInput').value) || 65;
       queue(function () {
         return C.writeWorldCAS(supa, GAME.id, function (game) {
           var world = JSON.parse(JSON.stringify(game.world));
