@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Better Off: Open Deals | Projector</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261005a">
+<style>
+  body { background: var(--ink); color: var(--paper); }
+  main { max-width: none; padding: 1rem 2rem; }
+  .pj-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+  .pj-code { font-family: 'JetBrains Mono', monospace; font-size: 2.8rem; letter-spacing: 0.15em; color: var(--gold); }
+  .pj-phase { font-family: 'Fraunces', Georgia, serif; font-size: 2rem; font-weight: 700; }
+  .pj-timer { font-family: 'JetBrains Mono', monospace; font-size: 2.6rem; }
+  .chainwrap { position: relative; margin-top: 1rem; }
+  .chaincols { display: flex; justify-content: space-between; gap: 2rem; position: relative; z-index: 2; }
+  .chaincol { flex: 1; display: flex; flex-direction: column; gap: 0.6rem; }
+  .chaincol h3 { text-align: center; color: var(--paper); }
+  .firmcard { background: #26333d; border: 2px solid #3c4b56; border-radius: 10px; padding: 0.5rem 0.7rem; }
+  .firmcard.combo-hot { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+  .firmcard.ai-covered { opacity: 0.55; }
+  .firmcard .fname { font-weight: 700; }
+  .firmcard .fteam { color: #b7c2ca; font-size: 0.85rem; }
+  #chainSvg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .pj-bottom { display: flex; gap: 2rem; margin-top: 1.5rem; }
+  .pj-leader { flex: 1.3; }
+  .pj-leader table { color: var(--paper); width: 100%; }
+  .pj-leader th { color: #9aa7af; }
+  .pj-leader td, .pj-leader th { border-bottom: 1px solid #3c4b56; }
+  .pj-tier-cols { display: flex; gap: 1.2rem; margin-top: 0.6rem; }
+  .pj-tier-col { flex: 1; min-width: 0; }
+  .pj-tier-col h4 { margin: 0 0 0.3rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: #9aa7af; }
+  .pj-tier-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid #3c4b56; font-size: 0.92rem; }
+  .pj-tier-row.winner { color: var(--gold); font-weight: 700; }
+  .winner-badge { margin-right: 0.3rem; }
+  .pj-room { flex: 1; }
+  .pj-room .big { font-size: 3rem; }
+  .goalbar-track { position: relative; height: 14px; background: #1d2730; border: 1px solid #3c4b56; border-radius: 7px; margin: 0.6rem 0 0.3rem; overflow: visible; }
+  .goalbar-fill { height: 100%; background: var(--accent); border-radius: 7px; transition: width 0.4s; }
+  .goalbar-fill.reached { background: var(--gold); }
+  .goalbar-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--paper); }
+  .pj-breaks { background: #3a2420; border: 1px solid #6b3a2e; border-radius: 10px; padding: 0.8rem 1rem; margin-top: 1rem; }
+  .pj-breaks h3 { color: var(--rust); }
+</style>
+</head>
+<body>
+<main>
+  <div class="pj-top">
+    <div><div class="pj-phase" id="phaseLabel">Better Off: Open Deals</div><div class="pj-code" id="joinCode"></div></div>
+    <div class="pj-timer" id="timerLabel"></div>
+  </div>
+
+  <div class="chainwrap">
+    <svg id="chainSvg"></svg>
+    <div class="chaincols" id="chainCols"></div>
+  </div>
+
+  <div class="pj-bottom">
+    <div class="pj-leader panel" style="background:#26333d; border-color:#3c4b56;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:var(--paper); margin:0;">Leaderboard — Gain, by tier</h3>
+        <label class="muted" style="font-size:0.85rem; font-weight:400;"><input type="checkbox" id="allFirmsToggle"> All firms by gain</label>
+      </div>
+      <div id="tierLeaderboards" class="pj-tier-cols"></div>
+      <table id="leaderTable" class="hidden"></table>
+    </div>
+    <div class="pj-room panel" style="background:#26333d; border-color:#3c4b56; text-align:center;">
+      <div class="muted">% of possible value built</div>
+      <div class="big" id="roomPct">0%</div>
+      <div class="goalbar-track"><div class="goalbar-fill" id="goalBarFill" style="width:0%;"></div><div class="goalbar-marker" id="goalBarMarker" style="left:40%;"></div></div>
+      <div class="muted" id="goalLabel">Room goal: 40%</div>
+      <div id="goalReached" class="hidden" style="color:var(--gold); font-weight:700; margin-top:0.2rem;">Goal reached!</div>
+    </div>
+  </div>
+
+  <div id="breaksPanel" class="pj-breaks hidden">
+    <h3>Breaks</h3>
+    <ul id="breaksList"></ul>
+  </div>
+</main>
+
+<script src="config.js?v=20261005a"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/core8.js?v=20261005a"></script>
+<script src="engine/bo8_engine.bundle.js?v=20261005a"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.BO8Core;
+  var supa = supabase.createClient(window.SUPA_URL, window.SUPA_ANON_KEY, { global: { fetch: C.makeTimeoutFetch(12000) } });
+  function engine() { return window.BO8 || null; }
+  var qs = new URLSearchParams(location.search);
+  var CODE = (qs.get('code') || '').toUpperCase();
+  var GAME = null, TEAMS = [], DEALS = [], DECISIONS = [];
+
+  if (!CODE) { document.getElementById('phaseLabel').textContent = 'Missing ?code='; }
+  else boot();
+
+  function boot() {
+    C.fetchGameByCode(supa, CODE).then(function (res) {
+      if (!res.data) { document.getElementById('phaseLabel').textContent = 'Game not found'; return; }
+      GAME = res.data;
+      document.getElementById('joinCode').textContent = GAME.join_code;
+      refresh();
+      subscribe();
+      setInterval(tickTimer, 1000);
+      window.addEventListener('resize', drawLines);
+      document.getElementById('allFirmsToggle').addEventListener('change', renderLeaderboard);
+    });
+  }
+
+  function subscribe() {
+    C.subscribeTable(supa, 'vgame8-' + GAME.id, 'weed_games', 'id=eq.' + GAME.id, function (payload) { GAME = payload.new; render(); });
+    C.subscribeTable(supa, 'vteams8-' + GAME.id, 'weed_teams', 'game_id=eq.' + GAME.id, function () { refresh(); });
+    C.subscribeTable(supa, 'vdeals8-' + GAME.id, 'weed_deals', 'game_id=eq.' + GAME.id, function () { refresh(); });
+    C.subscribeTable(supa, 'vdecs8-' + GAME.id, 'weed_decisions', 'game_id=eq.' + GAME.id, function () { refresh(); });
+    setInterval(refresh, 10000);
+  }
+
+  function refresh() {
+    Promise.all([
+      C.fetchGameById(supa, GAME.id).then(function (r) { if (r.data) GAME = r.data; }),
+      C.fetchTeams(supa, GAME.id).then(function (r) { TEAMS = r.data || []; }),
+      C.fetchDeals(supa, GAME.id).then(function (r) { DEALS = r.data || []; }),
+      C.fetchDecisions(supa, GAME.id).then(function (r) { DECISIONS = r.data || []; })
+    ]).then(render);
+  }
+
+  function tickTimer() {
+    var remain = GAME ? C.phaseClockRemaining(GAME.world) : null;
+    document.getElementById('timerLabel').textContent = C.fmtClock(remain);
+  }
+
+  function engineState() { return C.buildEngineState(DEALS, DECISIONS, TEAMS, GAME.world); }
+  function liveProjection() {
+    var e = engine();
+    if (!e) return null;
+    var phase = GAME.world.phase;
+    try {
+      if (phase === 'revealed' && GAME.world.result) return GAME.world.result;
+      if (phase === 'orders' && typeof e.project === 'function') return e.project(engineState());
+      if (typeof e.project === 'function') return e.project(engineState());
+    } catch (err) { console.warn('projection failed', err); }
+    return null;
+  }
+
+  function render() {
+    if (!GAME) return;
+    document.getElementById('phaseLabel').textContent = C.PHASE_LABEL[GAME.world.phase] || GAME.world.phase;
+    document.getElementById('joinCode').textContent = GAME.join_code;
+    renderChain();
+    renderLeaderboard();
+    renderRoom();
+    renderBreaks();
+    setTimeout(drawLines, 30);
+  }
+
+  function teamFor(cardId) { return TEAMS.filter(function (t) { return t.archetype === cardId; })[0]; }
+
+  // which firms are part of a hit combo -- only known/shown after reveal
+  // (DESIGN-v8.md section 7: "never itemized by name before reveal").
+  function comboHotSet() {
+    var hot = {};
+    if (GAME.world.phase !== 'revealed' || !GAME.world.result || !GAME.world.result.combosHit) return hot;
+    GAME.world.result.combosHit.forEach(function (c) {
+      (c.firms || c.members || []).forEach(function (id) { hot[id] = true; });
+    });
+    return hot;
+  }
+
+  function renderChain() {
+    var e = engine();
+    var hot = comboHotSet();
+    var aiCovered = GAME.world.ai_covered || [];
+    var tiers = [{ key: 'grower', label: 'Grower' }, { key: 'processor', label: 'Processor' }, { key: 'retailer', label: 'Retailer' }];
+    var html = '';
+    tiers.forEach(function (tier) {
+      html += '<div class="chaincol"><h3>' + tier.label + '</h3>';
+      C.SEAT_ORDER.filter(function (id) { return C.tierOf(id) === tier.key; }).forEach(function (id) {
+        var name = (e && typeof e.cardFor === 'function') ? (function () { try { return (e.cardFor(id) || {}).name; } catch (err) { return null; } })() : null;
+        var team = teamFor(id);
+        var covered = aiCovered.indexOf(id) !== -1;
+        html += '<div class="firmcard ' + (hot[id] ? 'combo-hot' : '') + ' ' + (covered ? 'ai-covered' : '') + '" id="firm-' + id + '">' +
+          '<div class="fname">' + (name || id) + ' <span class="mono" style="font-weight:400; color:#9aa7af;">' + id + '</span></div>' +
+          '<div class="fteam">' + (covered ? 'AI-covered' : (team && team.name !== team.archetype ? C.escapeHtml(team.name) : 'unclaimed')) + '</div></div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('chainCols').innerHTML = html;
+  }
+
+  // a line per confirmed delivery clause (DESIGN-v8.md section 8)
+  function confirmedDeliveryLinks() {
+    var links = [];
+    DEALS.filter(function (d) { return d.status === 'confirmed'; }).forEach(function (d) {
+      var clauses = (d.terms.reading && d.terms.reading.clauses) || [];
+      clauses.forEach(function (c) { if (c.type === 'deliver') links.push({ from: c.from, to: c.to }); });
+    });
+    return links;
+  }
+
+  function drawLines() {
+    var svg = document.getElementById('chainSvg');
+    var wrap = document.querySelector('.chainwrap');
+    if (!svg || !wrap) return;
+    var wrapRect = wrap.getBoundingClientRect();
+    svg.setAttribute('width', wrapRect.width);
+    svg.setAttribute('height', wrapRect.height);
+    var lines = '';
+    confirmedDeliveryLinks().forEach(function (d) {
+      var a = document.getElementById('firm-' + d.from), b = document.getElementById('firm-' + d.to);
+      if (!a || !b) return;
+      var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      var x1 = ra.right - wrapRect.left, y1 = ra.top + ra.height / 2 - wrapRect.top;
+      var x2 = rb.left - wrapRect.left, y2 = rb.top + rb.height / 2 - wrapRect.top;
+      lines += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#e0c15a" stroke-width="2.5" />';
+    });
+    svg.innerHTML = lines;
+  }
+
+  // Winners are by tier (lead, after the 2-crop patch): growers only compete
+  // against growers, etc. Three ranked columns live and after reveal, with a
+  // winner badge on the top of each tier only once revealed (projecting a
+  // "winner" before orders are even in would be misleading). The "All firms
+  // by gain" toggle swaps in the old flat table for debrief discussion.
+  function nameFor(id) {
+    var e = engine();
+    return (e && typeof e.cardFor === 'function') ? (function () { try { return (e.cardFor(id) || {}).name; } catch (err) { return id; } })() : id;
+  }
+  function renderLeaderboard() {
+    var proj = liveProjection();
+    var showAll = document.getElementById('allFirmsToggle').checked;
+    document.getElementById('tierLeaderboards').classList.toggle('hidden', showAll);
+    document.getElementById('leaderTable').classList.toggle('hidden', !showAll);
+    if (!proj || !proj.firms) {
+      document.getElementById('tierLeaderboards').innerHTML = '';
+      document.getElementById('leaderTable').innerHTML = '';
+      return;
+    }
+    var revealed = GAME.world.phase === 'revealed';
+    var tiers = C.rankByTier(proj.firms, TEAMS);
+    var tierLabels = { grower: 'Growers', processor: 'Processors', retailer: 'Retailers' };
+    var colsHtml = ['grower', 'processor', 'retailer'].map(function (tier) {
+      var group = tiers[tier];
+      var rows = group.ranked.map(function (row) {
+        var team = teamFor(row.id);
+        var isWinner = revealed && row.rank === 1;
+        return '<div class="pj-tier-row ' + (isWinner ? 'winner' : '') + '">' +
+          '<span>' + (isWinner ? '<span class="winner-badge">&#9733;</span>' : (row.rank + '. ')) + nameFor(row.id) +
+          '<br><span style="font-size:0.78rem; color:#9aa7af;">' + C.escapeHtml(team ? team.name : '') + '</span></span>' +
+          '<span>' + C.signedMoney(row.gain) + '</span></div>';
+      }).join('');
+      // AI-covered/unclaimed firms don't compete for the tier win (lead) --
+      // listed below a divider, no rank number, no winner eligibility.
+      if (group.others.length) {
+        rows += '<div class="muted" style="font-size:0.75rem; border-top:1px dashed #3c4b56; margin-top:0.4rem; padding-top:0.3rem;">AI-covered (not competing)</div>';
+        rows += group.others.map(function (row) {
+          return '<div class="pj-tier-row" style="opacity:0.55;"><span>' + nameFor(row.id) + '</span><span>' + C.signedMoney(row.gain) + '</span></div>';
+        }).join('');
+      }
+      return '<div class="pj-tier-col"><h4>' + tierLabels[tier] + '</h4>' + rows + '</div>';
+    }).join('');
+    document.getElementById('tierLeaderboards').innerHTML = colsHtml;
+
+    var html = '<tr><th>#</th><th>Firm</th><th>Team</th><th>Gain</th></tr>';
+    var ranked = Object.keys(proj.firms).sort(function (a, b) { return (proj.firms[b].gain || 0) - (proj.firms[a].gain || 0); });
+    ranked.forEach(function (id, i) {
+      var team = teamFor(id);
+      html += '<tr><td>' + (i + 1) + '</td><td>' + nameFor(id) + '</td><td>' + (team && team.name !== team.archetype ? C.escapeHtml(team.name) : 'AI-covered') + '</td><td>' + C.signedMoney(proj.firms[id].gain) + '</td></tr>';
+    });
+    document.getElementById('leaderTable').innerHTML = html;
+  }
+
+  function renderRoom() {
+    var proj = liveProjection();
+    var pct = (proj && proj.roomPct) || 0;
+    document.getElementById('roomPct').textContent = pct + '%';
+    var e = engine();
+    var goal = GAME.world.room_goal || (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 40;
+    var reached = pct >= goal;
+    var fill = document.getElementById('goalBarFill');
+    fill.style.width = Math.min(100, pct) + '%';
+    fill.classList.toggle('reached', reached);
+    document.getElementById('goalBarMarker').style.left = Math.min(100, goal) + '%';
+    document.getElementById('goalLabel').textContent = 'Room goal: ' + goal + '%';
+    document.getElementById('goalReached').classList.toggle('hidden', !reached);
+  }
+
+  // BO8.resolve()'s breaks entries are {key, from, reason} -- plain words,
+  // but `from` is a raw firm id and there's no ready sentence (lead's "use
+  // names never ids" rule applies here too; caught in a live-reader run
+  // where this panel was showing raw JSON instead of a sentence).
+  // Names the deal PARTNER and the actual penalty paid (lead): "Evergreen
+  // Acres broke its deal with Pine Ridge Processing and paid a $100k
+  // penalty." / "...and paid no penalty." Falls back to the plain reason
+  // text only if the clause can't be found (shouldn't happen -- DEALS always
+  // holds every confirmed deal this game resolved against).
+  function breakSentence(b) {
+    if (typeof b === 'string') return b;
+    var breakerName = nameFor(b.from) || b.from;
+    var clause = C.clauseForBreakKey(DEALS, b.key);
+    if (!clause) {
+      var reason = b.reason || 'broke a clause';
+      return breakerName + ': ' + reason.charAt(0).toUpperCase() + reason.slice(1) + '.';
+    }
+    var otherId = clause.from === b.from ? clause.to : clause.from;
+    var otherName = nameFor(otherId) || otherId;
+    var penalty = clause.penalty || 0;
+    var penaltyText = penalty > 0 ? ('paid a ' + C.money(penalty) + ' penalty') : 'paid no penalty';
+    return breakerName + ' broke its deal with ' + otherName + ' and ' + penaltyText + '.';
+  }
+  function renderBreaks() {
+    var panel = document.getElementById('breaksPanel');
+    if (GAME.world.phase !== 'revealed' || !GAME.world.result || !GAME.world.result.breaks || !GAME.world.result.breaks.length) {
+      panel.classList.add('hidden'); return;
+    }
+    panel.classList.remove('hidden');
+    document.getElementById('breaksList').innerHTML = GAME.world.result.breaks.map(function (b) {
+      return '<li>' + C.escapeHtml(breakSentence(b)) + '</li>';
+    }).join('');
+  }
+})();
+</script>
+</body>
+</html>

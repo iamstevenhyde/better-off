@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Better Off: Open Deals | Professor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%274%27 y=%274%27 width=%2724%27 height=%2724%27 rx=%274%27 fill=%27%231d2730%27/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261005a">
+<style>
+  .editform textarea { font-family:'JetBrains Mono', monospace; font-size:0.82rem; min-height:90px; }
+  .editform label { display:block; font-weight:700; margin:0.5rem 0 0.2rem; }
+</style>
+</head>
+<body>
+<div class="phase-banner"><span class="phase">Better Off: Open Deals — Professor</span><span id="gameCodeLabel" class="mono"></span></div>
+<div id="readerBanner" class="hidden" style="background:var(--bad); color:#fff; font-weight:700; padding:0.7rem 1rem; text-align:center;">AI reader is not running. Deals with extras will wait. Double-click v8\reader\start_reader.bat.</div>
+<div id="msgBanner" class="hidden" style="position:fixed; top:0; left:0; right:0; z-index:1000; padding:0.6rem 1rem; font-weight:700;"></div>
+<main>
+  <div class="panel" id="gameListPanel">
+    <h2>Games</h2>
+    <div class="row"><button id="newGameBtn">New game</button></div>
+    <table id="gameListTable"><tr><th>Code</th><th>Phase</th><th>Created</th><th></th></tr></table>
+  </div>
+
+  <div id="runPanel" class="hidden">
+    <div id="writerBanner" class="panel hidden" style="background:#fff3cd;"></div>
+    <div class="panel row" style="justify-content:space-between; align-items:center;">
+      <div><strong id="runCode" class="mono" style="font-size:1.4rem;"></strong> &middot; phase: <span id="runPhase"></span> &middot; <span id="hbLightWrap"><span class="hblight" id="hbLight"></span><span id="hbLabel" class="muted"></span></span></div>
+      <button class="secondary" onclick="location.reload()">Back to game list</button>
+    </div>
+
+    <div class="panel">
+      <h3>Phase control</h3>
+      <div class="row">
+        <button id="btnStartDeals">Start deals</button>
+        <button id="btnCloseDeals">Close deals and open orders</button>
+        <button id="btnReveal" class="danger">Reveal</button>
+      </div>
+      <div class="row" style="margin-top:0.6rem;">
+        <label>Deal minutes <input type="number" id="dealsMinutes" value="25" min="1" max="60" style="width:4.5rem;"></label>
+        <label>Orders minutes <input type="number" id="ordersMinutes" value="4" min="1" max="20" style="width:4.5rem;"></label>
+        <span class="mono" id="clockDisplay"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Room goal</h3>
+      <div class="row">
+        <label>% of possible value <input type="number" id="roomGoalInput" value="40" min="1" max="100" style="width:4rem;"></label>
+        <button id="roomGoalSave" class="secondary">Save</button>
+        <span class="muted" id="roomPctLive"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Reader / Bots</h3>
+      <div class="row">
+        <label><input type="checkbox" id="fakeReaderSwitch"> Fake reader (dev only — fills readings when reader.py isn't running)</label>
+        <label><input type="checkbox" id="botsSwitch"> Bots run unclaimed / AI-covered firms (write deals, confirm, submit orders)</label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Roster</h3>
+      <table id="cardsTable"><tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Seat link</th><th></th></tr></table>
+    </div>
+
+    <div class="panel">
+      <h3>Deals</h3>
+      <table id="dealsTable"><tr><th>Text</th><th>Parties</th><th>Status</th><th>Reading</th><th></th></tr></table>
+    </div>
+
+    <div id="editModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center;">
+      <div class="panel editform" style="width:600px; max-height:85vh; overflow:auto; background:#fff;">
+        <h3>Edit reading</h3>
+        <label>Summary</label><textarea id="editSummary" rows="3"></textarea>
+        <label>Clauses (JSON array)</label><textarea id="editClauses" rows="8"></textarea>
+        <label>Not counted (comma-separated)</label><textarea id="editNotCounted" rows="1"></textarea>
+        <label>Promises (comma-separated)</label><textarea id="editPromises" rows="1"></textarea>
+        <div id="editValidation" class="muted" style="margin-top:0.4rem;"></div>
+        <div class="row" style="margin-top:0.6rem;">
+          <button id="editSaveBtn">Save as read</button>
+          <button class="secondary" id="editCancelBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="config.js?v=20261005a"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/core8.js?v=20261005a"></script>
+<script src="engine/bo8_engine.bundle.js?v=20261005a"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.BO8Core;
+  var supa = supabase.createClient(window.SUPA_URL, window.SUPA_ANON_KEY, { global: { fetch: C.makeTimeoutFetch(12000) } });
+  function engine() { return window.BO8 || null; }
+
+  var GAME = null, TEAMS = [], DEALS = [], DECISIONS = [];
+  var MY_TAB_ID = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('tab-' + Math.random().toString(36).slice(2));
+  var queue = C.makeQueue();
+  var amWriter = false;
+  var inFlight = false, inFlightSince = null;
+  var botsTimer = null, fakeReaderTimer = null, clockTick = null, pollTimer = null, heartbeatTimer = null, watchdogTimer = null;
+  var editingDealId = null;
+
+  var msgTimer = null;
+  function showMsg(text, kind) {
+    var el = document.getElementById('msgBanner');
+    el.textContent = text;
+    el.style.background = kind === 'error' ? '#b5472b' : '#1f6f5c';
+    el.style.color = '#fff';
+    el.classList.remove('hidden');
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(function () { el.classList.add('hidden'); }, 6000);
+  }
+
+  watchdogTimer = setInterval(function () {
+    if (inFlight && inFlightSince && (Date.now() - inFlightSince) > 20000) {
+      console.warn('inFlight watchdog: clearing a stuck action after 20s');
+      inFlight = false; inFlightSince = null;
+      showMsg('That action took too long and was reset. Re-checking game state...', 'error');
+      if (GAME) C.fetchGameById(supa, GAME.id).then(function (res) { if (res.data) GAME = res.data; renderAll(); });
+    }
+  }, 5000);
+
+  loadGameList();
+
+  function loadGameList() {
+    supa.from('weed_games').select('*').order('created_at', { ascending: false }).limit(60).then(function (res) {
+      var rows = (res.data || []).filter(function (g) { return g.world && g.world.v === 8; });
+      var html = '<tr><th>Code</th><th>Phase</th><th>Created</th><th></th></tr>';
+      rows.forEach(function (g) {
+        html += '<tr><td class="mono">' + g.join_code + '</td><td>' + g.phase + '</td><td class="muted">' + new Date(g.created_at).toLocaleString() + '</td>' +
+          '<td><button class="secondary" data-open="' + g.id + '">Open</button></td></tr>';
+      });
+      document.getElementById('gameListTable').innerHTML = html;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-open]'), function (b) {
+        b.addEventListener('click', function () { openGame(b.getAttribute('data-open')); });
+      });
+    });
+  }
+
+  document.getElementById('newGameBtn').addEventListener('click', function () {
+    var code = C.genJoinCode();
+    var e = engine();
+    var roomGoalDefault = (e && e.CONST && e.CONST.ROOM_GOAL_DEFAULT) || 40;
+    var world = { v: 8, rev: 0, phase: 'lobby', deals_started_at: null, deals_minutes: 25, orders_started_at: null, orders_minutes: 4, room_goal: roomGoalDefault, ai_covered: [], result: null, writer: null };
+    supa.from('weed_games').insert({ join_code: code, status: 'active', phase: 'lobby', season: 1, world: world })
+      .select().single().then(function (res) {
+        if (res.error) { showMsg(res.error.message, 'error'); return; }
+        var game = res.data;
+        var rows = C.SEAT_ORDER.map(function (id, i) {
+          return { game_id: game.id, name: id, seat_index: i, archetype: id, is_ai: false, role: 'independent', state: { claimed: false } };
+        });
+        supa.from('weed_teams').insert(rows).then(function () { openGame(game.id); });
+      });
+  });
+
+  function openGame(id) {
+    supa.from('weed_games').select('*').eq('id', id).single().then(function (res) {
+      GAME = res.data;
+      document.getElementById('gameListPanel').classList.add('hidden');
+      document.getElementById('runPanel').classList.remove('hidden');
+      document.getElementById('gameCodeLabel').textContent = 'Code: ' + GAME.join_code;
+      document.getElementById('runCode').textContent = GAME.join_code;
+      claimWriterIfFree();
+      refreshAll();
+      subscribe();
+      wireButtons();
+      startClockTick();
+      startHeartbeat();
+      startPoll();
+    });
+  }
+
+  function claimWriterIfFree() {
+    var w = GAME.world.writer;
+    var freshOther = w && w.tabId !== MY_TAB_ID && (Date.now() - w.heartbeat) < 20000;
+    if (freshOther) { amWriter = false; renderWriterBanner(); return; }
+    claimWriterNow();
+  }
+  function claimWriterNow() {
+    return C.writeWorldCAS(supa, GAME.id, function (game) {
+      var world = JSON.parse(JSON.stringify(game.world));
+      world.writer = { tabId: MY_TAB_ID, heartbeat: Date.now() };
+      return { world: world };
+    }).then(function (game) { GAME = game; amWriter = true; renderWriterBanner(); syncPhaseButtons(); });
+  }
+  function renderWriterBanner() {
+    var el = document.getElementById('writerBanner');
+    var w = GAME.world.writer;
+    var freshOther = w && w.tabId !== MY_TAB_ID && (Date.now() - w.heartbeat) < 20000;
+    if (freshOther) {
+      el.classList.remove('hidden'); el.textContent = '';
+      var span = document.createElement('span'); span.textContent = 'Another professor tab is in control. ';
+      var btn = document.createElement('button'); btn.className = 'secondary'; btn.textContent = 'Take over';
+      btn.addEventListener('click', function () { claimWriterNow(); });
+      el.appendChild(span); el.appendChild(btn);
+    } else el.classList.add('hidden');
+  }
+  function startHeartbeat() {
+    heartbeatTimer = setInterval(function () {
+      if (!amWriter) return;
+      queue(function () {
+        return C.writeWorldCAS(supa, GAME.id, function (game) {
+          if (!game.world.writer || game.world.writer.tabId !== MY_TAB_ID) return null;
+          var world = JSON.parse(JSON.stringify(game.world));
+          world.writer = { tabId: MY_TAB_ID, heartbeat: Date.now() };
+          return { world: world };
+        }).then(function (game) { GAME = game; });
+      });
+    }, 8000);
+  }
+
+  function refreshAll() {
+    return Promise.all([
+      C.fetchTeams(supa, GAME.id).then(function (r) { TEAMS = r.data || []; }),
+      C.fetchDeals(supa, GAME.id).then(function (r) { DEALS = r.data || []; }),
+      C.fetchDecisions(supa, GAME.id).then(function (r) { DECISIONS = r.data || []; })
+    ]).then(renderAll);
+  }
+
+  function subscribe() {
+    C.subscribeTable(supa, 'pgame8-' + GAME.id, 'weed_games', 'id=eq.' + GAME.id, function (payload) { GAME = payload.new; renderAll(); renderWriterBanner(); });
+    C.subscribeTable(supa, 'pteams8-' + GAME.id, 'weed_teams', 'game_id=eq.' + GAME.id, function () { refreshAll(); });
+    C.subscribeTable(supa, 'pdeals8-' + GAME.id, 'weed_deals', 'game_id=eq.' + GAME.id, function () { refreshAll(); });
+    C.subscribeTable(supa, 'pdecs8-' + GAME.id, 'weed_decisions', 'game_id=eq.' + GAME.id, function () { refreshAll(); });
+  }
+  function startPoll() { pollTimer = setInterval(refreshAll, 10000); }
+
+  function engineState() { return C.buildEngineState(DEALS, DECISIONS, TEAMS, GAME.world); }
+
+  function renderAll() {
+    document.getElementById('runPhase').textContent = GAME.phase;
+    if (document.activeElement !== document.getElementById('roomGoalInput')) {
+      var e2 = engine();
+      document.getElementById('roomGoalInput').value = GAME.world.room_goal || (e2 && e2.CONST && e2.CONST.ROOM_GOAL_DEFAULT) || 40;
+    }
+    if (document.activeElement !== document.getElementById('dealsMinutes')) document.getElementById('dealsMinutes').value = GAME.world.deals_minutes || 25;
+    if (document.activeElement !== document.getElementById('ordersMinutes')) document.getElementById('ordersMinutes').value = GAME.world.orders_minutes || 4;
+    renderHeartbeat();
+    renderRoomPctLive();
+    renderCards();
+    renderDeals();
+    syncPhaseButtons();
+  }
+
+  // ROUND2-CONTRACT.md section C: a full-width red banner, separate from the
+  // small hbLight dot above, whenever the deal clock is running (or about to
+  // -- lobby counts too) and the reader's heartbeat is stale or missing.
+  // Gone once a fresh heartbeat shows up, gone after reveal (nothing left
+  // for the reader to do).
+  function renderHeartbeat() {
+    var fresh = C.heartbeatFresh(DECISIONS, 30000);
+    document.getElementById('hbLight').className = 'hblight ' + (fresh ? 'green' : 'red');
+    document.getElementById('hbLabel').textContent = fresh ? 'AI reader: live' : 'AI reader: not responding';
+    var phase = GAME.world.phase;
+    var showBanner = !fresh && (phase === 'lobby' || phase === 'deals' || phase === 'orders');
+    document.getElementById('readerBanner').classList.toggle('hidden', !showBanner);
+  }
+
+  function renderRoomPctLive() {
+    var e = engine();
+    if (!e || typeof e.project !== 'function') { document.getElementById('roomPctLive').textContent = ''; return; }
+    try {
+      var proj = e.project(engineState());
+      document.getElementById('roomPctLive').textContent = 'Room value right now: ' + (proj.roomPct != null ? proj.roomPct + '%' : '...');
+    } catch (err) { document.getElementById('roomPctLive').textContent = ''; }
+  }
+
+  function renderCards() {
+    var html = '<tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Seat link</th><th></th></tr>';
+    TEAMS.forEach(function (t) {
+      var e = engine();
+      var name = (e && typeof e.cardFor === 'function') ? (function () { try { return (e.cardFor(t.archetype) || {}).name; } catch (err) { return null; } })() : null;
+      var link = 'student.html?code=' + GAME.join_code + '&card=' + t.archetype + '&token=' + t.join_token;
+      var unclaimed = t.name === t.archetype;
+      var covered = isBotSeat(t); // is_ai OR still unclaimed -- see isBotSeat below
+      var toggleCell = unclaimed
+        ? '<button class="toggle on" disabled title="Unclaimed seats are AI-covered automatically">Auto</button>'
+        : '<button class="toggle ' + (t.is_ai ? 'on' : 'off') + '" data-ai-toggle="' + t.id + '">' + (t.is_ai ? 'On' : 'Off') + '</button>';
+      html += '<tr><td>' + (name || t.archetype) + ' <span class="mono muted">' + t.archetype + '</span></td><td><span class="tag ' + C.tierOf(t.archetype) + '">' + C.tierOf(t.archetype) + '</span></td>' +
+        '<td>' + (unclaimed ? '<span class="muted">unclaimed</span>' : C.escapeHtml(t.name)) + '</td>' +
+        '<td>' + toggleCell + '</td>' +
+        '<td><button class="secondary" data-copy-link="' + encodeURIComponent(link) + '">Copy link</button></td>' +
+        '<td><button class="danger" data-reset-seat="' + t.id + '">Reset seat</button></td></tr>';
+    });
+    document.getElementById('cardsTable').innerHTML = html;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ai-toggle]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-ai-toggle');
+        var row = TEAMS.filter(function (t) { return t.id === id; })[0];
+        supa.from('weed_teams').update({ is_ai: !row.is_ai }).eq('id', id).then(function () {
+          return syncAiCovered();
+        }).then(refreshAll);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-copy-link]'), function (b) {
+      b.addEventListener('click', function () {
+        var link = decodeURIComponent(b.getAttribute('data-copy-link'));
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(function () { showMsg('Seat link copied.'); }, function () { showMsg(link); });
+        else showMsg(link);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reset-seat]'), function (b) {
+      var armed = false, revertTimer = null;
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-reset-seat');
+        var row = TEAMS.filter(function (t) { return t.id === id; })[0];
+        if (!armed) { armed = true; b.textContent = 'Click again to confirm'; revertTimer = setTimeout(function () { armed = false; b.textContent = 'Reset seat'; }, 5000); return; }
+        clearTimeout(revertTimer); armed = false;
+        var newToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now());
+        supa.from('weed_teams').update({ name: row.archetype, state: { claimed: false }, join_token: newToken }).eq('id', id).then(function () {
+          showMsg(row.archetype + ' seat reset.'); return refreshAll();
+        });
+      });
+    });
+  }
+
+  // world.ai_covered mirrors isBotSeat (is_ai toggled on, OR still unclaimed)
+  // so the engine's resolve/project reads it straight off world (DESIGN-v8.md
+  // section 11: only the professor writes world). A seat left unclaimed was
+  // previously scored as if a human were holding it and simply not dealing,
+  // which decays its crop to the floor instead of running standalone --
+  // lead flagged this as silently distorting room%/leaderboard, so every
+  // unclaimed seat counts as AI-covered automatically, with no toggle needed.
+  function syncAiCovered() {
+    return queue(function () {
+      return C.writeWorldCAS(supa, GAME.id, function (game) {
+        var world = JSON.parse(JSON.stringify(game.world));
+        world.ai_covered = TEAMS.filter(isBotSeat).map(function (t) { return t.archetype; });
+        return { world: world };
+      }).then(function (game) { GAME = game; });
+    });
+  }
+
+  // >20s reading is long enough Steven should consider stepping in with Edit
+  // (lead, after reader8's parallel-workers/15s-timeout work); needs
+  // terms.reader.started_at (reader8 writes it on claim -- null on older
+  // rows or before that ships, in which case this column is just blank).
+  var STUCK_READING_MS_PROF = 20000;
+  function renderDeals() {
+    var html = '<tr><th>Text</th><th>Parties</th><th>Status</th><th>Reading for</th><th>Reading</th><th></th></tr>';
+    DEALS.slice().reverse().forEach(function (d) {
+      var t = d.terms || {};
+      var elapsed = C.readingElapsedMs(d);
+      var elapsedCell = elapsed == null ? '' : ('<span' + (elapsed > STUCK_READING_MS_PROF ? ' class="reason" style="font-weight:700;"' : '') + '>' + Math.round(elapsed / 1000) + 's</span>');
+      html += '<tr><td style="max-width:260px;">' + C.escapeHtml(t.text || '') + '</td>' +
+        '<td class="mono">' + (t.parties || []).join(', ') + '</td>' +
+        '<td><span class="chip ' + C.statusClass(d) + '">' + C.statusLabel(d) + '</span></td>' +
+        '<td>' + elapsedCell + '</td>' +
+        '<td style="max-width:220px; font-size:0.85rem;">' + C.escapeHtml((t.reading && t.reading.summary) || (t.question || '')) + '</td>' +
+        '<td><button class="secondary" data-edit="' + d.id + '">Edit</button> <button class="danger" data-void="' + d.id + '">Void</button></td></tr>';
+    });
+    document.getElementById('dealsTable').innerHTML = html;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'), function (b) { b.addEventListener('click', function () { openEdit(b.getAttribute('data-edit')); }); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-void]'), function (b) { b.addEventListener('click', function () { voidDeal(b.getAttribute('data-void')); }); });
+  }
+
+  function voidDeal(id) {
+    supa.from('weed_deals').update({ status: 'voided' }).eq('id', id).then(refreshAll);
+  }
+
+  function openEdit(id) {
+    editingDealId = id;
+    var d = DEALS.filter(function (x) { return x.id === id; })[0];
+    var reading = (d.terms && d.terms.reading) || {};
+    document.getElementById('editSummary').value = reading.summary || '';
+    document.getElementById('editClauses').value = JSON.stringify(reading.clauses || [], null, 2);
+    document.getElementById('editNotCounted').value = (reading.not_counted || []).join(', ');
+    document.getElementById('editPromises').value = (reading.promises || []).join(', ');
+    document.getElementById('editValidation').textContent = '';
+    document.getElementById('editModal').classList.remove('hidden');
+  }
+  document.getElementById('editCancelBtn').addEventListener('click', function () { document.getElementById('editModal').classList.add('hidden'); editingDealId = null; });
+  document.getElementById('editSaveBtn').addEventListener('click', function () {
+    var d = DEALS.filter(function (x) { return x.id === editingDealId; })[0];
+    if (!d) return;
+    var clauses;
+    try { clauses = JSON.parse(document.getElementById('editClauses').value || '[]'); }
+    catch (e) { document.getElementById('editValidation').textContent = 'Clauses must be valid JSON: ' + e.message; return; }
+    var reading = {
+      summary: document.getElementById('editSummary').value,
+      clauses: clauses,
+      deal_condition: (d.terms.reading && d.terms.reading.deal_condition) || null,
+      promises: document.getElementById('editPromises').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      not_counted: document.getElementById('editNotCounted').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      question: null
+    };
+    var e = engine();
+    if (e && typeof e.validateReading === 'function') {
+      try {
+        var v = e.validateReading(reading, { parties: d.terms.parties });
+        if (v && v.ok === false) { document.getElementById('editValidation').textContent = 'Invalid: ' + v.reason; return; }
+      } catch (err) { /* engine not ready yet; allow professor override */ }
+    }
+    var newTerms = Object.assign({}, d.terms, { reading: reading, edited_by_prof: true, confirmations: {} });
+    supa.from('weed_deals').update({ terms: newTerms, status: 'read' }).eq('id', d.id).then(function (res) {
+      if (res.error) { showMsg(res.error.message, 'error'); return; }
+      document.getElementById('editModal').classList.add('hidden');
+      editingDealId = null;
+      showMsg('Reading saved. Both sides must confirm again.');
+      refreshAll();
+    });
+  });
+
+  function syncPhaseButtons() {
+    var phase = GAME.world.phase;
+    document.getElementById('btnStartDeals').disabled = inFlight || !amWriter || phase !== 'lobby';
+    document.getElementById('btnCloseDeals').disabled = inFlight || !amWriter || phase !== 'deals';
+    document.getElementById('btnReveal').disabled = inFlight || !amWriter || phase !== 'orders';
+  }
+
+  function withInFlight(fn) {
+    inFlight = true; inFlightSince = Date.now(); syncPhaseButtons();
+    return fn().then(function () { inFlight = false; inFlightSince = null; return refreshAll(); })
+      .catch(function (err) {
+        inFlight = false; inFlightSince = null;
+        console.error(err);
+        showMsg('Action failed: ' + (err && err.message ? err.message : err), 'error');
+        return refreshAll();
+      });
+  }
+
+  function wireButtons() {
+    document.getElementById('btnStartDeals').addEventListener('click', function () {
+      withInFlight(function () {
+        return queue(function () {
+          return C.writeWorldCAS(supa, GAME.id, function (game) {
+            if (game.world.phase !== 'lobby') return null;
+            var world = JSON.parse(JSON.stringify(game.world));
+            world.phase = 'deals';
+            world.deals_started_at = new Date().toISOString();
+            world.deals_minutes = parseFloat(document.getElementById('dealsMinutes').value) || 25;
+            // Lock in AI coverage at the moment deals open (lead, after
+            // negative room%% review): any seat still unclaimed right now is
+            // AI-covered for the whole game, in the same write as the phase
+            // flip, so a forgotten roster toggle can never distort scoring.
+            world.ai_covered = TEAMS.filter(isBotSeat).map(function (t) { return t.archetype; });
+            return { world: world, phase: 'deals' };
+          }).then(function (game) { GAME = game; });
+        });
+      });
+    });
+    document.getElementById('btnCloseDeals').addEventListener('click', function () {
+      withInFlight(function () {
+        return queue(function () {
+          return C.writeWorldCAS(supa, GAME.id, function (game) {
+            if (game.world.phase !== 'deals') return null;
+            var world = JSON.parse(JSON.stringify(game.world));
+            world.phase = 'orders';
+            world.orders_started_at = new Date().toISOString();
+            world.orders_minutes = parseFloat(document.getElementById('ordersMinutes').value) || 4;
+            return { world: world, phase: 'orders' };
+          }).then(function (game) { GAME = game; });
+        });
+      });
+    });
+    document.getElementById('btnReveal').addEventListener('click', function () {
+      withInFlight(function () {
+        var e = engine();
+        if (!e || typeof e.resolve !== 'function') { return Promise.reject(new Error('Engine not loaded yet.')); }
+        var result;
+        try { result = e.resolve(engineState()); } catch (err) { return Promise.reject(err); }
+        return queue(function () {
+          return C.writeWorldCAS(supa, GAME.id, function (game) {
+            if (game.world.phase !== 'orders') return null;
+            var world = JSON.parse(JSON.stringify(game.world));
+            world.phase = 'revealed';
+            world.result = result;
+            return { world: world, phase: 'revealed' };
+          }).then(function (game) { GAME = game; });
+        });
+      });
+    });
+
+    document.getElementById('roomGoalSave').addEventListener('click', function () {
+      var pct = parseFloat(document.getElementById('roomGoalInput').value) || 40;
+      queue(function () {
+        return C.writeWorldCAS(supa, GAME.id, function (game) {
+          var world = JSON.parse(JSON.stringify(game.world));
+          world.room_goal = pct;
+          return { world: world };
+        }).then(function (game) { GAME = game; showMsg('Room goal set to ' + pct + '%.'); });
+      });
+    });
+
+    document.getElementById('fakeReaderSwitch').addEventListener('change', function () {
+      if (this.checked) startFakeReader(); else stopFakeReader();
+    });
+    document.getElementById('botsSwitch').addEventListener('change', function () {
+      if (this.checked) startBots(); else stopBots();
+    });
+  }
+
+  function startClockTick() {
+    clockTick = setInterval(function () {
+      var remain = C.phaseClockRemaining(GAME.world);
+      document.getElementById('clockDisplay').textContent = C.fmtClock(remain);
+    }, 1000);
+  }
+
+  // ---- dev-only fake reader: fills 'written' deals with a reading via
+  // BO8.bots.randomReading until reader.py is live (DESIGN-v8.md section 8:
+  // "include a dev-only Fake reader toggle... fills readings with BO8.bots").
+  function startFakeReader() {
+    if (fakeReaderTimer) return;
+    fakeReaderTimer = setInterval(fakeReaderTick, 4000);
+    fakeReaderTick();
+  }
+  function stopFakeReader() { clearInterval(fakeReaderTimer); fakeReaderTimer = null; }
+  // Builds a reading constrained to the deal's ACTUAL parties (never
+  // BO8.bots.randomReading's own free-roaming counterparty pick, which
+  // produced a reading about Timberline for a deal the student wrote with
+  // Pine Ridge -- lead caught this in the smoke screenshots). Only handles a
+  // plain 2-party, adjacent-tier deal; a 3-party or non-adjacent deal is left
+  // for the professor to Edit by hand (dev-only fallback, not a full reader).
+  function cardNameOr(e, id) { try { return (e.cardFor(id) || {}).name; } catch (err) { return id; } }
+  function buildFakeReading(e, parties) {
+    if (!parties || parties.length !== 2) return null;
+    var aId = parties[0], bId = parties[1];
+    var tA = C.tierOf(aId), tB = C.tierOf(bId);
+    var fromId, toId, good;
+    if (tA === 'grower' && tB === 'processor') { fromId = aId; toId = bId; good = 'crop'; }
+    else if (tB === 'grower' && tA === 'processor') { fromId = bId; toId = aId; good = 'crop'; }
+    else if (tA === 'processor' && tB === 'retailer') { fromId = aId; toId = bId; good = 'product'; }
+    else if (tB === 'processor' && tA === 'retailer') { fromId = bId; toId = aId; good = 'product'; }
+    else return null;
+    var price = good === 'crop'
+      ? Math.round((e.CONST.AI_CROP_BID_START + e.CONST.AI_CROP_ASK) / 2)
+      : Math.round((e.CONST.AI_PRODUCT_BID + e.CONST.AI_PRODUCT_ASK) / 2);
+    var clause = { type: 'deliver', id: 'c1', from: fromId, to: toId, good: good, qty: 1, price: price, penalty: 0 };
+    var what = good === 'crop' ? 'its crop' : 'one product';
+    var summary = cardNameOr(e, fromId) + ' delivers ' + what + ' to ' + cardNameOr(e, toId) + ' for ' + C.money(price) + '.';
+    return { summary: summary, clauses: [clause], deal_condition: null, promises: [], not_counted: [], question: null };
+  }
+
+  function fakeReaderTick() {
+    var e = engine();
+    if (!e || typeof e.validateReading !== 'function') return;
+    var pending = DEALS.filter(function (d) { return d.status === 'written' || d.status === 'reading'; });
+    var ops = pending.map(function (d) {
+      var reading = buildFakeReading(e, d.terms.parties);
+      if (!reading) { console.warn('fake reader: cannot build a reading for parties', d.terms.parties, '(not a plain adjacent-tier pair; use Edit)'); return Promise.resolve(); }
+      // Every reading, fake/AI/professor-edited, must validate against the
+      // deal's OWN parties before it is ever shown to a student (lead).
+      var v = e.validateReading(reading, { parties: d.terms.parties });
+      if (!v.ok) { console.warn('fake reader produced an invalid reading', v.errors); return Promise.resolve(); }
+      var newTerms = Object.assign({}, d.terms, { reading: reading, reader: 'fake-reader' });
+      return supa.from('weed_deals').update({ terms: newTerms, status: 'read' }).eq('id', d.id);
+    });
+    Promise.all(ops).then(refreshAll);
+  }
+
+  // ---- bots: unclaimed / AI-covered firms write deals, confirm readings,
+  // submit orders (DESIGN-v8.md section 8). ----
+  function startBots() {
+    if (botsTimer) return;
+    botsTimer = setInterval(runBotsOnce, 6000);
+    runBotsOnce();
+  }
+  function stopBots() { clearInterval(botsTimer); botsTimer = null; }
+  function isBotSeat(t) { return t.is_ai || t.name === t.archetype; }
+
+  function runBotsOnce() {
+    if (!GAME) return;
+    var e = engine();
+    if (!e || !e.bots) return;
+    var phase = GAME.world.phase;
+    var botTeams = TEAMS.filter(isBotSeat);
+    var ops = [];
+    if (phase === 'deals') {
+      // one new deal proposal per tick per bot, paired with another bot when
+      // possible so a flood never lands on a human seat mid-class
+      botTeams.forEach(function (t) {
+        if (Math.random() > 0.3) return; // don't flood every tick
+        try {
+          var out = e.bots.randomReading(engineState(), t.archetype, Math.random);
+          var otherId = out.parties.filter(function (id) { return id !== t.archetype; })[0];
+          var partner = TEAMS.filter(function (x) { return x.archetype === otherId; })[0];
+          if (!partner) return;
+          // Every reading must validate against its OWN parties before it is
+          // ever shown (lead) -- defensive here too, even though bots.parties
+          // and bots.reading come from the same randomReading call.
+          var bv = e.validateReading(out.reading, { parties: out.parties });
+          if (!bv.ok) { console.warn('bot produced an invalid reading', bv.errors); return; }
+          ops.push(supa.from('weed_deals').insert({
+            game_id: GAME.id, season: 1, type: 'open', proposer_seat: t.seat_index, partner_seat: partner.seat_index,
+            status: 'read', terms: Object.assign(C.newDealTerms(t.archetype, out.parties, out.reading.summary), { reading: out.reading, reader: 'bot' })
+          }));
+        } catch (err) { /* engine not ready */ }
+      });
+      // bots confirm any reading addressed to them
+      DEALS.filter(function (d) { return d.status === 'read'; }).forEach(function (d) {
+        (d.terms.parties || []).forEach(function (p) {
+          var team = TEAMS.filter(function (t) { return t.archetype === p; })[0];
+          if (team && isBotSeat(team) && !(d.terms.confirmations || {})[p]) {
+            var terms = JSON.parse(JSON.stringify(d.terms));
+            terms.confirmations = terms.confirmations || {};
+            terms.confirmations[p] = true;
+            var status = C.allPartiesConfirmed({ terms: terms }) ? 'confirmed' : 'read';
+            ops.push(supa.from('weed_deals').update({ terms: terms, status: status }).eq('id', d.id));
+          }
+        });
+      });
+    } else if (phase === 'orders') {
+      botTeams.forEach(function (t) {
+        var already = DECISIONS.filter(function (d) { return d.kind === 'orders' && d.seat_index === t.seat_index; });
+        if (already.length) return;
+        ops.push(C.insertDecision(supa, GAME.id, 1, t.seat_index, 'orders', { firm: t.archetype, choices: {}, rank: [], buyAiIfShort: true, submitted_at: new Date().toISOString() }));
+      });
+    }
+    Promise.all(ops).then(function () { return refreshAll(); }).catch(function (err) { console.warn('bots tick failed', err); });
+  }
+})();
+</script>
+</body>
+</html>

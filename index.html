@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Better Off: Open Deals</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%231f6f5c%27/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261005a">
+<style>
+  body { display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+  .wrap { width: 100%; max-width: 720px; }
+  .brand { font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  h1 { font-size: 2.4rem; line-height: 1.1; color: var(--rust); margin-bottom: 0.55rem; }
+  .lede { color: var(--muted); line-height: 1.5; margin: 0 0 1.8rem; max-width: 52ch; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1.15rem 1.2rem;
+          display: block; text-decoration: none; color: inherit; }
+  .card.primary { border-color: var(--rust); grid-column: 1 / -1; }
+  a.card:hover { border-color: var(--gold); }
+  .go { font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 0.3rem; color: var(--accent); }
+  .card.primary .go { color: var(--rust); }
+  .sub { color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+  form { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+  input.code { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; font-size: 1.4rem; letter-spacing: 0.25em;
+               text-transform: uppercase; width: 9.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; }
+  .card.small input.code { font-size: 1.05rem; width: 7.5rem; }
+  .err { color: var(--bad); font-size: 0.88rem; min-height: 1.2em; margin-top: 0.4rem; }
+  .note { margin-top: 1.6rem; color: var(--muted); font-size: 0.85rem; line-height: 1.5; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .note b { color: var(--ink); }
+  @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } h1 { font-size: 1.9rem; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">MBA 546 &middot; Week 7</div>
+    <h1>Better Off: Open Deals</h1>
+    <p class="lede">You run one cannabis business, a grower, a processor or a retailer. Talk to anyone about anything. A deal counts when you write it down and both sides confirm the AI's reading of it.</p>
+    <div class="cards">
+      <div class="card primary">
+        <div class="go">Student: join a game &rarr;</div>
+        <div class="sub">Type the 5-letter join code your professor reads out, then claim a firm card for your team.</div>
+        <form data-target="student.html">
+          <input class="code" maxlength="5" placeholder="CODE" autocomplete="off" autofocus aria-label="Join code">
+          <button type="submit">Join</button>
+        </form>
+        <div class="err"></div>
+      </div>
+      <a class="card" href="professor.html">
+        <div class="go">Professor &rarr;</div>
+        <div class="sub">Create a game, get the join code, run the phases and the clock. Only this screen reveals the game.</div>
+      </a>
+      <div class="card small">
+        <div class="go">Projector &rarr;</div>
+        <div class="sub">The room screen: chain map, leaderboard and room goal.</div>
+        <form data-target="projector.html">
+          <input class="code" maxlength="5" placeholder="CODE" autocomplete="off" aria-label="Join code for projector">
+          <button type="submit">Open</button>
+        </form>
+        <div class="err"></div>
+      </div>
+    </div>
+    <p class="note">The professor creates the game and reads out the <b>join code</b>. Every team opens this same page on its own laptop, picks <b>Student</b>, and types the code. One laptop per team.</p>
+  </div>
+<script src="config.js?v=20261005a"></script>
+<script>
+  document.querySelectorAll('form[data-target]').forEach(function (form) {
+    var input = form.querySelector('input');
+    var err = form.parentNode.querySelector('.err');
+    input.addEventListener('input', function () { input.value = input.value.toUpperCase().replace(/[^A-Z]/g, ''); err.textContent = ''; });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var code = input.value.trim().toUpperCase();
+      if (!/^[A-Z]{5}$/.test(code)) { err.textContent = 'The join code is 5 letters.'; return; }
+      var go = function () { location.href = form.getAttribute('data-target') + '?code=' + code; };
+      fetch(window.SUPA_URL + '/rest/v1/weed_games?join_code=eq.' + code + '&select=join_code',
+            { headers: { apikey: window.SUPA_ANON_KEY, Authorization: 'Bearer ' + window.SUPA_ANON_KEY } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) { if (Array.isArray(rows) && rows.length) go(); else err.textContent = 'No game with code ' + code + '. Check the letters with your professor.'; })
+        .catch(go);
+    });
+  });
+</script>
+</body>
+</html>

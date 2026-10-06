@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Better Off: Open Deals | Student</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%231f6f5c%27/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261005a">
+<style>
+  .firm-head { display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap; justify-content:space-between; }
+  .firm-head .who { display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap; }
+  .fallback-box { background:#faf7f0; border:1px solid var(--border); border-radius:8px; padding:0.8rem 1rem; margin:0.7rem 0; }
+  .facts-box { background:#fff8e6; border:1px solid #e6d3a3; border-radius:8px; padding:0.8rem 1rem; margin-top:0.7rem; }
+  .facts-box h3 { font-size:1rem; color:var(--gold); margin-bottom:0.3rem; }
+  .party-pick { display:flex; gap:0.4rem; flex-wrap:wrap; margin:0.4rem 0 0.7rem; }
+  .party-pick button { background:#fff; color:var(--ink); border:1px solid var(--border); font-weight:400; }
+  .party-pick button.on { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
+  .section-title { font-size:1.2rem; margin:0 0 0.4rem; }
+  .empty { color:var(--muted); font-style:italic; }
+  .projected { background:#eef6f2; border:1px solid var(--accent); border-radius:8px; padding:0.6rem 1rem; font-weight:700; margin:0.7rem 0; }
+  .clause-text { flex:1; min-width:220px; }
+  .slider-row { margin:0.6rem 0; }
+  .slider-row label { display:flex; justify-content:space-between; font-weight:700; margin-bottom:0.2rem; }
+  .slider-row .valout { font-family:'JetBrains Mono', monospace; font-weight:400; color:var(--muted); }
+  .slider-row input[type=range]:disabled { opacity:0.5; }
+  .deal-preview { background:#eef6f2; border:1px solid var(--accent); border-radius:8px; padding:0.6rem 0.8rem; margin:0.6rem 0; }
+  .confirm-note { font-size:0.85rem; color:var(--muted); margin-top:0.2rem; }
+  .top-grid { display:grid; grid-template-columns:1fr 340px; gap:1rem; }
+  @media (max-width:900px) { .top-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div id="claimScreen" class="hidden">
+  <div class="phase-banner"><span class="phase">Better Off: Open Deals</span><span id="claimCode" class="mono"></span></div>
+  <main>
+    <div class="panel">
+      <h2>Claim your firm</h2>
+      <p class="muted">Type your team name onto an unclaimed card. First come, first served.</p>
+      <div id="claimTierGroups"></div>
+    </div>
+  </main>
+</div>
+
+<div id="app" class="hidden">
+  <div class="phase-banner">
+    <span class="phase" id="phaseLabel">...</span>
+    <span class="timer mono" id="timerLabel"></span>
+  </div>
+  <main>
+    <div class="panel firm-head" style="flex-direction:column; align-items:stretch;">
+      <div class="firm-head" style="padding:0;">
+        <div class="who">
+          <span class="tag" id="myTierTag"></span>
+          <strong id="myCardName"></strong>
+          <span class="muted" id="myTeamLabel"></span>
+        </div>
+        <div class="projected" id="projectedGain" style="margin:0;"></div>
+      </div>
+      <div class="muted" id="tierCompeteLine" style="margin-top:0.3rem; font-size:0.85rem;"></div>
+    </div>
+
+    <div id="dealsPhase">
+      <div class="top-grid">
+        <div>
+          <div class="panel" id="firmCardPanel"></div>
+          <div class="panel" id="dealComposer">
+            <h2 class="section-title">Write a deal</h2>
+            <p class="muted">Agree the deal out loud first, then write it up and send it.</p>
+            <div id="counterBanner" class="hidden" style="background:#fff3cd; border:1px solid var(--gold); border-radius:8px; padding:0.5rem 0.8rem; margin-bottom:0.6rem; font-size:0.9rem;"></div>
+            <label>Kind of deal<span class="q" tabindex="0" data-tip="Sell crops or products to the firm next in the chain. Set up a full grower-processor-retailer chain in one deal. Sell something you know. Or merge profits with another firm.">?</span></label>
+            <div class="party-pick" id="typePick"></div>
+            <p class="muted" id="typeHelp" style="font-size:0.85rem; margin:0.2rem 0 0.6rem;"></p>
+            <p class="muted" id="partnerHelp" style="font-size:0.82rem; margin:0 0 0.3rem;">Growers sell crops to processors. Processors sell products to retailers. Anyone can sell a fact or merge profits with anyone.</p>
+            <div id="partnerPickWrap">
+              <label for="partnerSelect">Trade with<span class="q" tabindex="0" data-tip="Who this deal is with.">?</span></label>
+              <select id="partnerSelect"><option value="">Choose a partner</option></select>
+            </div>
+            <div id="sliderBox"></div>
+            <label for="extrasText">Changes or extras (optional)<span class="q" tabindex="0" data-tip="Anything beyond the generic deal: a side payment, a condition on another deal (&quot;only if...&quot;), sharing a fact, or a promise that isn't enforced.">?</span></label>
+            <textarea id="extrasText" rows="3" placeholder="e.g. a side payment of $20k, &quot;only if Pine Ridge's product goes to Canopy Corner&quot;, sharing a fact, or a promise not to sell elsewhere."></textarea>
+            <button id="sendDealBtn" class="send" style="margin-top:0.6rem; width:100%;">Send</button>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <h2 class="section-title">Inbox <span id="inboxCount" class="mono"></span></h2>
+            <div id="inboxBox"><p class="empty">Nothing waiting on you.</p></div>
+          </div>
+          <div class="panel">
+            <h2 class="section-title">My deals</h2>
+            <div id="myDealsBox"><p class="empty">No deals yet. Go talk to someone.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ordersPhase" class="hidden">
+      <div class="panel">
+        <h2 class="section-title">Secret orders<span class="q" tabindex="0" data-tip="Orders are secret until the reveal. You decide, for each deal you signed, whether to honor it or break it. Breaking costs only the penalty the deal itself named.">?</span></h2>
+        <p class="muted">Orders are secret until the reveal.</p>
+        <div id="ordersBox"></div>
+        <button id="submitOrdersBtn" class="send" style="margin-top:0.8rem; width:100%;">Submit orders</button>
+        <div id="ordersSavedNote" class="confirm-note"></div>
+      </div>
+    </div>
+
+    <div id="resultsPhase" class="hidden">
+      <div class="panel">
+        <h2 class="section-title">Results</h2>
+        <div id="resultsBox"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="loadScreen"><main><div class="panel"><p>Loading...</p></div></main></div>
+<div id="msgBanner" class="hidden" style="position:fixed; top:0; left:0; right:0; z-index:1000; padding:0.6rem 1rem; font-weight:700;"></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js?v=20261005a"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/core8.js?v=20261005a"></script>
+<script src="engine/bo8_engine.bundle.js?v=20261005a"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.BO8Core;
+  var supa = supabase.createClient(window.SUPA_URL, window.SUPA_ANON_KEY, { global: { fetch: C.makeTimeoutFetch(12000) } });
+
+  function engine() { return window.BO8 || null; }
+
+  var qs = new URLSearchParams(location.search);
+  var CODE = (qs.get('code') || '').toUpperCase();
+  var LINK_CARD = qs.get('card');
+  var LINK_TOKEN = qs.get('token');
+
+  var GAME = null, TEAMS = [], DEALS = [], DECISIONS = [];
+  var MY = null, MY_ID = null;
+  // ROUND2-CONTRACT.md sections A + D: a deal-type picker (sell/chain/fact/
+  // pool), each with its own fields, replacing the old multi-party free-text
+  // composer. counterOf is set while the composer is prefilled from an
+  // inbox card's Counter button.
+  var dealDraft = {
+    type: 'sell', partner: null, qty: 1, price: null, penalty: null,
+    chainGrower: null, chainProcessor: null, chainRetailer: null, cropPrice: null, productPrice: null, chainPenalty: null,
+    fact: null, factPrice: null,
+    myShare: null,
+    counterOf: null
+  };
+  var lastStatusById = {};
+  var questionDraftOpenFor = null;
+
+  document.getElementById('claimCode').textContent = 'Code: ' + CODE;
+
+  function showMsg(text, kind) {
+    var el = document.getElementById('msgBanner');
+    el.textContent = text;
+    el.style.background = kind === 'error' ? '#b5472b' : '#1f6f5c';
+    el.style.color = '#fff';
+    el.classList.remove('hidden');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.add('hidden'); }, 6000);
+  }
+  function toast(msg, bad) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.toggle('bad', !!bad);
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('show'); }, 3600);
+  }
+
+  if (!CODE) {
+    document.getElementById('loadScreen').innerHTML = '<main><div class="panel"><h2>Missing code</h2><p><a href="index.html">Go to the start page</a> and type your join code.</p></div></main>';
+  } else {
+    boot();
+  }
+
+  function boot() {
+    C.fetchGameByCode(supa, CODE).then(function (res) {
+      if (res.error || !res.data) {
+        document.getElementById('loadScreen').innerHTML = '<main><div class="panel"><h2>Game not found</h2><p>Check the code.</p></div></main>';
+        return;
+      }
+      GAME = res.data;
+      refreshAllThenRoute();
+      subscribe();
+    });
+  }
+
+  function subscribe() {
+    C.subscribeTable(supa, 'sgame8-' + GAME.id, 'weed_games', 'id=eq.' + GAME.id, function (payload) { GAME = payload.new; render(); });
+    C.subscribeTable(supa, 'steams8-' + GAME.id, 'weed_teams', 'game_id=eq.' + GAME.id, function () { refreshTeams().then(render); });
+    C.subscribeTable(supa, 'sdeals8-' + GAME.id, 'weed_deals', 'game_id=eq.' + GAME.id, function () { refreshDeals().then(render); });
+    C.subscribeTable(supa, 'sdecs8-' + GAME.id, 'weed_decisions', 'game_id=eq.' + GAME.id, function () { refreshDecisions().then(render); });
+    setInterval(function () {
+      C.fetchGameById(supa, GAME.id).then(function (r) { if (r.data) { GAME = r.data; render(); } });
+      refreshTeams().then(render);
+      refreshDeals().then(render);
+      refreshDecisions().then(render);
+    }, 8000);
+    // The clock (and, for a grower, the live falling AI bid) needs a 1s
+    // tick, but a full render() every second used to rebuild every panel
+    // from scratch -- including the party-pick buttons and the Honor/Break
+    // buttons -- which could detach a button mid-click under a student's
+    // real mouse, and would have clobbered a focused/typing element had one
+    // ever lived inside a rebuilt container (lead, after the smoke-test
+    // flakiness turned out to be a real risk, not just test timing).
+    // tickClock() only ever touches the clock text and the live bid number
+    // in place; actual panel rebuilds happen only from subscribe/poll above
+    // (real data changes), each itself guarded against stepping on focus.
+    setInterval(tickClock, 1000);
+  }
+
+  function tickClock() {
+    if (!GAME) return;
+    var remain = C.phaseClockRemaining(GAME.world);
+    document.getElementById('timerLabel').textContent = C.fmtClock(remain);
+    if (MY_ID && C.tierOf(MY_ID) === 'grower' && (GAME.world.phase === 'deals' || GAME.world.phase === 'lobby')) {
+      updateCropBidLive();
+    }
+  }
+
+  // Updates ONLY the live AI-bid number text node (id="aiCropBidNumber",
+  // set by renderCropBidBox below) -- never touches crops-left, the locked-
+  // sales list, or the Sell button, all of which only change when a decision
+  // row actually changes (handled by a real render(), not this tick).
+  function updateCropBidLive() {
+    var numEl = document.getElementById('aiCropBidNumber');
+    if (!numEl) return;
+    var e = engine();
+    var startedAt = GAME.world.deals_started_at;
+    var elapsed = startedAt ? Math.max(0, (Date.now() - new Date(startedAt).getTime()) / 1000) : 0;
+    var bid = (e && typeof e.aiCropBid === 'function') ? (function () { try { return e.aiCropBid(elapsed); } catch (err) { return null; } })() : null;
+    numEl.textContent = bid != null ? C.money(bid) : '...';
+  }
+
+  // A rebuild must never yank focus out from under a student mid-click or
+  // mid-keystroke (lead): before replacing a dynamic container's innerHTML,
+  // skip this pass if the focused element lives inside it. The next real
+  // data refresh (subscribe/poll) picks it up once focus has moved on.
+  function elementHasFocus(id) {
+    var el = document.getElementById(id);
+    return !!(el && document.activeElement && document.activeElement !== document.body && el.contains(document.activeElement));
+  }
+
+  function refreshTeams() { return C.fetchTeams(supa, GAME.id).then(function (r) { TEAMS = r.data || []; }); }
+  function refreshDeals() { return C.fetchDeals(supa, GAME.id).then(function (r) { DEALS = r.data || []; }); }
+  function refreshDecisions() { return C.fetchDecisions(supa, GAME.id).then(function (r) { DECISIONS = r.data || []; }); }
+  function refreshAllThenRoute() {
+    Promise.all([refreshTeams(), refreshDeals(), refreshDecisions()]).then(routeClaim);
+  }
+
+  // ---- seat identity, same pattern as v7 ----
+  function savedSeat() {
+    try { var raw = localStorage.getItem('bo8_seat_' + CODE); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function saveSeat(card, token) {
+    try { localStorage.setItem('bo8_seat_' + CODE, JSON.stringify({ card: card, token: token })); } catch (e) {}
+  }
+  function clearSavedSeat() { try { localStorage.removeItem('bo8_seat_' + CODE); } catch (e) {} }
+
+  function routeClaim() {
+    if (LINK_CARD && LINK_TOKEN) {
+      var row = TEAMS.filter(function (t) { return t.archetype === LINK_CARD; })[0];
+      if (row && row.join_token === LINK_TOKEN) {
+        if (row.name !== row.archetype) { saveSeat(row.archetype, row.join_token); startApp(row.archetype); }
+        else { claimRow(row, 'Test ' + row.archetype).then(function () { startApp(row.archetype); }); }
+        return;
+      }
+      document.getElementById('loadScreen').innerHTML = '<main><div class="panel"><h2>Link no longer valid</h2><p>Ask for a fresh link, or join from the plain code.</p></div></main>';
+      return;
+    }
+    var saved = savedSeat();
+    if (saved) {
+      var mine = TEAMS.filter(function (t) { return t.archetype === saved.card; })[0];
+      if (mine && mine.name !== mine.archetype && mine.join_token === saved.token) { startApp(saved.card); return; }
+      clearSavedSeat();
+    }
+    showClaimScreen();
+  }
+
+  function showClaimScreen() {
+    document.getElementById('loadScreen').classList.add('hidden');
+    document.getElementById('claimScreen').classList.remove('hidden');
+    renderClaimScreen();
+  }
+
+  function renderClaimScreen() {
+    var groups = { grower: [], processor: [], retailer: [] };
+    TEAMS.forEach(function (t) { groups[C.tierOf(t.archetype)].push(t); });
+    var html = '';
+    ['grower', 'processor', 'retailer'].forEach(function (tier) {
+      html += '<h3 style="margin-top:1rem;"><span class="tag ' + tier + '">' + tier + '</span></h3><div class="row">';
+      groups[tier].forEach(function (t) {
+        var claimed = t.name !== t.archetype;
+        var name = (engine() && typeof engine().cardFor === 'function') ? (engine().cardFor(t.archetype) || {}).name : null;
+        html += '<div class="panel col ' + (claimed ? 'claimed' : '') + '" style="width:220px;">' +
+          '<img class="card-art" src="' + C.artFor(t.archetype) + '" alt="">' +
+          '<strong>' + (name || t.archetype) + '</strong>' +
+          '<span class="mono muted">' + t.archetype + '</span>';
+        if (claimed) html += '<span class="muted">Claimed: ' + C.escapeHtml(t.name) + '</span>';
+        else html += '<input type="text" placeholder="Team name" id="claiminput-' + t.archetype + '">' +
+          '<button onclick="window.__bo8claim(\'' + t.archetype + '\')">Claim</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('claimTierGroups').innerHTML = html;
+  }
+
+  window.__bo8claim = function (archetype) {
+    var input = document.getElementById('claiminput-' + archetype);
+    var name = (input.value || '').trim();
+    if (!name) { input.focus(); return; }
+    var row = TEAMS.filter(function (t) { return t.archetype === archetype; })[0];
+    claimRow(row, name).then(function (ok) { if (ok) startApp(archetype); else refreshTeams().then(renderClaimScreen); });
+  };
+
+  function claimRow(row, name) {
+    return supa.from('weed_teams').update({ name: name, state: { claimed: true } })
+      .eq('id', row.id).eq('name', row.archetype).select()
+      .then(function (res) {
+        var ok = res.data && res.data.length > 0;
+        if (ok) saveSeat(row.archetype, res.data[0].join_token);
+        return ok;
+      });
+  }
+
+  function startApp(cardId) {
+    MY_ID = cardId;
+    document.getElementById('claimScreen').classList.add('hidden');
+    document.getElementById('loadScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    render();
+  }
+
+  // ---- engine state / project ----
+  function engineState() { return C.buildEngineState(DEALS, DECISIONS, TEAMS, GAME.world); }
+  function safeProject() {
+    var e = engine();
+    if (!e || typeof e.project !== 'function') return null;
+    try { return e.project(engineState()); } catch (err) { console.warn('project failed', err); return null; }
+  }
+  function safeCardFor(firmId) {
+    var e = engine();
+    if (!e || typeof e.cardFor !== 'function') return null;
+    try {
+      var extra = extraFactIdsFor(firmId);
+      return e.cardFor(firmId, extra);
+    } catch (err) { console.warn('cardFor failed', err); return null; }
+  }
+  // facts gained via a confirmed deal's share_fact clause targeting me
+  function extraFactIdsFor(firmId) {
+    var ids = [];
+    DEALS.forEach(function (d) {
+      if (d.status !== 'confirmed') return;
+      var clauses = (d.terms && d.terms.reading && d.terms.reading.clauses) || [];
+      clauses.forEach(function (c) { if (c.type === 'share_fact' && c.to === firmId) ids.push(c.fact); });
+    });
+    return ids;
+  }
+
+  function render() {
+    if (!GAME || !MY_ID) return;
+    MY = TEAMS.filter(function (t) { return t.archetype === MY_ID; })[0];
+    renderBanner();
+    renderHeader();
+    var phase = GAME.world.phase;
+    document.getElementById('dealsPhase').classList.toggle('hidden', phase !== 'deals' && phase !== 'lobby');
+    document.getElementById('ordersPhase').classList.toggle('hidden', phase !== 'orders');
+    document.getElementById('resultsPhase').classList.toggle('hidden', phase !== 'revealed');
+    if (phase === 'deals' || phase === 'lobby') {
+      if (!elementHasFocus('firmCardPanel')) renderFirmCard();
+      if (!elementHasFocus('dealComposer')) renderDealComposerIfChanged();
+      if (!elementHasFocus('inboxBox')) renderInbox();
+      if (!elementHasFocus('myDealsBox')) renderMyDeals();
+    } else if (phase === 'orders') {
+      if (!elementHasFocus('ordersBox')) renderOrders();
+    } else if (phase === 'revealed') {
+      renderResults();
+    }
+    detectAndToastStatusChanges();
+  }
+
+  function renderBanner() {
+    document.getElementById('phaseLabel').textContent = (C.PHASE_LABEL[GAME.world.phase] || GAME.world.phase);
+    var remain = C.phaseClockRemaining(GAME.world);
+    document.getElementById('timerLabel').textContent = C.fmtClock(remain);
+  }
+
+  function renderHeader() {
+    var card = safeCardFor(MY_ID);
+    document.getElementById('myTierTag').textContent = C.tierOf(MY_ID);
+    document.getElementById('myTierTag').className = 'tag ' + C.tierOf(MY_ID);
+    document.getElementById('myCardName').textContent = (card ? card.name : MY_ID);
+    document.getElementById('myTeamLabel').textContent = '— ' + MY.name;
+    var tierPlural = { grower: 'growers', processor: 'processors', retailer: 'retailers' }[C.tierOf(MY_ID)];
+    document.getElementById('tierCompeteLine').textContent = "You're competing with the other " + tierPlural + '.';
+    var gainEl = document.getElementById('projectedGain');
+    // After reveal, the header must show the REAL outcome (world.result),
+    // never the pre-reveal projection -- lead, since showing a projection
+    // post-reveal reads as if the game hadn't actually resolved yet.
+    if (GAME.world.phase === 'revealed' && GAME.world.result && GAME.world.result.firms && GAME.world.result.firms[MY_ID]) {
+      var finalGain = GAME.world.result.firms[MY_ID].gain;
+      gainEl.textContent = 'Final gain: ' + C.signedMoney(finalGain);
+      gainEl.style.borderColor = finalGain >= 0 ? 'var(--accent)' : 'var(--rust)';
+    } else {
+      var proj = safeProject();
+      if (proj && proj.firms && proj.firms[MY_ID]) {
+        var g = proj.firms[MY_ID].gain;
+        gainEl.textContent = 'If everyone does what they signed: ' + C.signedMoney(g);
+        gainEl.style.borderColor = g >= 0 ? 'var(--accent)' : 'var(--rust)';
+      } else {
+        gainEl.textContent = 'If everyone does what they signed: ...';
+      }
+    }
+  }
+
+  function renderFirmCard() {
+    var card = safeCardFor(MY_ID);
+    var panel = document.getElementById('firmCardPanel');
+    if (!card) {
+      panel.innerHTML = '<p class="muted">Loading your firm card...</p>';
+      return;
+    }
+    var html = '<div class="row">' +
+      '<img class="card-art" src="' + C.artFor(MY_ID) + '" style="width:140px;">' +
+      '<div class="col" style="flex:1; min-width:220px;">' +
+      '<h2 style="margin:0;">' + card.name + '</h2>' +
+      '<p class="muted" style="margin:0.2rem 0 0;">' + (card.plain || '') + '</p>' +
+      '</div></div>';
+    html += '<div class="fallback-box">' +
+      '<div class="muted" style="font-size:0.8rem;">YOUR FALLBACK</div>' +
+      '<div>' + (card.fallback || []).join(' ') + '</div></div>';
+    if (C.tierOf(MY_ID) === 'grower') html += renderCropBidBox();
+    if (card.fits && card.fits.length) {
+      html += '<div><strong>Your fits:</strong><ul>' + card.fits.map(function (f) {
+        return '<li>Fits well with ' + f.name + ' (' + f.words + ')</li>';
+      }).join('') + '</ul></div>';
+    }
+    if (card.facts && card.facts.length) {
+      html += '<div class="facts-box"><h3>What you know</h3><ul>' + card.facts.map(function (f) { return '<li>' + C.escapeHtml(f.text || f) + '</li>'; }).join('') + '</ul></div>';
+    }
+    // ownFragment: this firm's own partial piece of a combo it's IN (engine8,
+    // COMBOS-v8.md) -- a hint about its own hidden bonus, in the same plain,
+    // never-the-dollar-amount voice as the fit/fact lines above.
+    if (card.ownFragment && card.ownFragment.text) {
+      html += '<div class="facts-box"><h3>Worth knowing about your own business</h3><p style="margin:0;">' + C.escapeHtml(card.ownFragment.text) + '</p></div>';
+    }
+    var pools = confirmedPoolsFor(MY_ID);
+    if (pools.length) {
+      html += '<div class="deal-preview">' + pools.map(poolSentence).join('<br>') + '</div>';
+    }
+    panel.innerHTML = html;
+    var sellBtn = document.getElementById('sellToAiBtn');
+    if (sellBtn) sellBtn.addEventListener('click', sellToAiNow);
+  }
+
+  // A grower has CONST.GROWER_CAPACITY (2) crops. Each click of "Sell one
+  // crop to the AI now" locks in ONE of them at the current bid (one
+  // weed_decisions 'ai_sale' row per lock) -- so a grower can sell neither,
+  // one, or both separately, keeping whichever it still holds free to
+  // deliver on a deal. "Crops left" is CAPACITY minus how many it has
+  // already locked in this game.
+  function renderCropBidBox() {
+    var e = engine();
+    var cap = (e && e.CONST && e.CONST.GROWER_CAPACITY) || 2;
+    var locked = C.cropsLockedCount(DECISIONS, MY.seat_index);
+    var left = Math.max(0, cap - locked);
+    var startedAt = GAME.world.deals_started_at;
+    var elapsed = startedAt ? Math.max(0, (Date.now() - new Date(startedAt).getTime()) / 1000) : 0;
+    var bid = (e && typeof e.aiCropBid === 'function') ? (function () { try { return e.aiCropBid(elapsed); } catch (err) { return null; } })() : null;
+    var lockedSales = DECISIONS.filter(function (d) { return d.kind === 'ai_sale' && d.seat_index === MY.seat_index; });
+    var html = '<div class="panel" style="background:#faf7f0;">' +
+      '<div class="muted" style="font-size:0.8rem;">CROPS LEFT: ' + left + ' OF ' + cap + '</div>';
+    lockedSales.forEach(function (s) {
+      html += '<div class="muted" style="font-size:0.85rem;">Sold one crop to the AI for ' + C.money(s.payload.bid) + '.</div>';
+    });
+    if (left > 0) {
+      html += '<div class="muted" style="font-size:0.8rem; margin-top:0.4rem;">AI CROP BID (FALLING)<span class="q" tabindex="0" data-tip="The AI buyer\'s price starts at 400 and falls over time. Lock in one crop any time, or let it ride if you have a better deal coming.">?</span></div>' +
+        '<div class="big" id="aiCropBidNumber">' + (bid != null ? C.money(bid) : '...') + '</div>' +
+        '<button id="sellToAiBtn" style="margin-top:0.4rem;">Sell one crop to the AI now</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function sellToAiNow() {
+    var e = engine();
+    var startedAt = GAME.world.deals_started_at;
+    var elapsed = startedAt ? Math.max(0, (Date.now() - new Date(startedAt).getTime()) / 1000) : 0;
+    var bid = (e && typeof e.aiCropBid === 'function') ? e.aiCropBid(elapsed) : 0;
+    C.insertDecision(supa, GAME.id, 1, MY.seat_index, 'ai_sale', { firm: MY_ID, bid: bid, at: new Date().toISOString() })
+      .then(function () { toast('Sold one crop to the AI for ' + C.money(bid) + '.'); refreshDecisions().then(render); });
+  }
+
+  // ---- write a deal (ROUND2-CONTRACT.md sections A + D): a type picker
+  // (sell / chain / fact / pool), each with its own fields, a plain one-line
+  // explanation, a live preview, and a shared Extras box underneath. 'sell'
+  // is the original adjacent-tier slider deal (A, landed); chain/fact/pool
+  // are new (D) -- coded against the contract, gated behind the engine
+  // functions existing ("Engine loading..." until engine8 ships them), same
+  // policy as 'sell' had in round 1. ----
+  var DEAL_TYPES = ['sell', 'chain', 'fact', 'pool'];
+  var DEAL_TYPE_LABEL = { sell: 'Sell crops/products', chain: 'Three-way chain', fact: 'Sell a fact', pool: 'Merge profits' };
+  // Fallback one-liners for CONST.TEMPLATES[type].help until engine8 ships
+  // it -- plain copy only, no business logic, so safe to default locally.
+  var DEAL_TYPE_HELP_FALLBACK = {
+    sell: 'Trade a crop or product with the firm next to you in the chain.',
+    chain: 'Set up a full grower, processor and retailer chain in one deal.',
+    fact: 'Sell something you know to another firm.',
+    pool: 'Merge profits with another firm: add up your gains and split them by a percentage you both agree on.'
+  };
+  function typeHelpText(type) {
+    var e = engine();
+    var t = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES[type];
+    return (t && t.help) || DEAL_TYPE_HELP_FALLBACK[type] || '';
+  }
+
+  // ---- pool (merger) display (ROUND2-CONTRACT.md section D): "binding, not
+  // in secret orders, cannot be broken" -- purely presentational, computed
+  // straight off the confirmed deal row's own template fields, no engine
+  // call needed (the actual pooled-gain MATH still comes from
+  // project()/resolve() once engine8 lands the pool resolution). ----
+  function confirmedPoolsFor(firmId) {
+    return DEALS.filter(function (d) {
+      return d.status === 'confirmed' && d.terms && d.terms.template && d.terms.template.type === 'pool' &&
+        (d.terms.parties || []).indexOf(firmId) !== -1;
+    });
+  }
+  function poolSentence(d) {
+    var f = d.terms.template.fields;
+    var otherId = (d.terms.parties || []).filter(function (p) { return p !== MY_ID; })[0];
+    var myShare = d.terms.writer === MY_ID ? f.myShare : (100 - f.myShare);
+    return 'You and ' + cardName(otherId) + ' add up your gains and split them ' + myShare + '/' + (100 - myShare) + '.';
+  }
+
+  function resetDealDraftFields() {
+    dealDraft.partner = null; dealDraft.price = null; dealDraft.penalty = null; dealDraft.qty = 1;
+    dealDraft.chainGrower = null; dealDraft.chainProcessor = null; dealDraft.chainRetailer = null;
+    dealDraft.cropPrice = null; dealDraft.productPrice = null; dealDraft.chainPenalty = null;
+    dealDraft.fact = null; dealDraft.factPrice = null;
+    dealDraft.myShare = null;
+  }
+
+  // {good, from, to} for a 'sell' deal between me and partnerId -- direction
+  // is always grower->processor (crop) or processor->retailer (product),
+  // regardless of who wrote the deal (DESIGN-v8.md section 5).
+  function dealDirection(partnerId) {
+    var myTier = C.tierOf(MY_ID), otherTier = C.tierOf(partnerId);
+    if (myTier === 'grower' && otherTier === 'processor') return { good: 'crop', from: MY_ID, to: partnerId };
+    if (myTier === 'processor' && otherTier === 'grower') return { good: 'crop', from: partnerId, to: MY_ID };
+    if (myTier === 'processor' && otherTier === 'retailer') return { good: 'product', from: MY_ID, to: partnerId };
+    if (myTier === 'retailer' && otherTier === 'processor') return { good: 'product', from: partnerId, to: MY_ID };
+    return null;
+  }
+
+  // Every other firm, grouped by tier -- used directly for 'chain' (see
+  // below), never through BO8.templatePartners: the real engine deliberately
+  // returns {grower:[],processor:[],retailer:[]} for 'chain' ("names
+  // grower/processor/retailer directly in fields, not a single partner" --
+  // bo8_engine.js), so the three chain role pickers enumerate the roster
+  // themselves.
+  function allFirmsByTier(excludeId) {
+    var groups = { grower: [], processor: [], retailer: [] };
+    TEAMS.forEach(function (t) { if (t.archetype !== excludeId) groups[C.tierOf(t.archetype)].push(t.archetype); });
+    return groups;
+  }
+
+  // BO8.templatePartners(writer, type) -> {grower:[ids], processor:[ids],
+  // retailer:[ids]} (ROUND2-CONTRACT.md section D), for 'sell'/'fact'/'pool'
+  // only. Fallback is pure roster filtering (no clause/money logic), so it's
+  // safe to keep as a UI convenience until engine8 ships the real function,
+  // unlike the deal READING itself (round 2: never fall back on that).
+  function templatePartnersFor(type) {
+    var e = engine();
+    if (e && typeof e.templatePartners === 'function') {
+      try { var r = e.templatePartners(MY_ID, type); if (r) return r; } catch (err) { console.warn('templatePartners failed', err); }
+    }
+    var others = TEAMS.filter(function (t) { return t.archetype !== MY_ID; });
+    if (type === 'sell') {
+      var myTier = C.tierOf(MY_ID);
+      var okTiers = myTier === 'processor' ? ['grower', 'retailer'] : ['processor'];
+      others = others.filter(function (t) { return okTiers.indexOf(C.tierOf(t.archetype)) !== -1; });
+    }
+    var groups = { grower: [], processor: [], retailer: [] };
+    others.forEach(function (t) { groups[C.tierOf(t.archetype)].push(t.archetype); });
+    return groups;
+  }
+  function partnerGroupLabel(type, tier) {
+    if (type === 'sell') {
+      var myTier = C.tierOf(MY_ID);
+      if (myTier === 'grower') return 'Processors (they buy your crops)';
+      if (myTier === 'retailer') return 'Processors (they sell you products)';
+      if (tier === 'grower') return 'Growers (you buy their crops)';
+      if (tier === 'retailer') return 'Retailers (they buy your products)';
+    }
+    return { grower: 'Growers', processor: 'Processors', retailer: 'Retailers' }[tier];
+  }
+
+  var partnerSelectSignature = null;
+  function renderPartnerOptions(type) {
+    var sel = document.getElementById('partnerSelect');
+    var groups = templatePartnersFor(type);
+    partnerSelectSignature = type + '|' + ['grower', 'processor', 'retailer'].map(function (t) { return t + ':' + (groups[t] || []).join(','); }).join('|');
+    var stillValid = ['grower', 'processor', 'retailer'].some(function (t) { return (groups[t] || []).indexOf(dealDraft.partner) !== -1; });
+    if (dealDraft.partner && !stillValid) dealDraft.partner = null;
+    var html = '<option value="">Choose a partner</option>';
+    ['grower', 'processor', 'retailer'].forEach(function (tier) {
+      var ids = groups[tier] || [];
+      if (!ids.length) return;
+      html += '<optgroup label="' + C.escapeHtml(partnerGroupLabel(type, tier)) + '">' + ids.map(function (id) {
+        var card = safeCardFor(id); var name = card ? card.name : id;
+        return '<option value="' + id + '"' + (dealDraft.partner === id ? ' selected' : '') + '>' + C.escapeHtml(name) + '</option>';
+      }).join('') + '</optgroup>';
+    });
+    sel.innerHTML = html;
+  }
+
+  function renderTypePick() {
+    var box = document.getElementById('typePick');
+    box.innerHTML = DEAL_TYPES.map(function (t) {
+      var disabled = dealDraft.counterOf && t !== dealDraft.type; // counters must keep the original's type
+      return '<button type="button" data-type="' + t + '" class="' + (dealDraft.type === t ? 'on' : '') + '"' + (disabled ? ' disabled' : '') + '>' + DEAL_TYPE_LABEL[t] + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('button:not([disabled])'), function (b) {
+      b.addEventListener('click', function () {
+        var t = b.getAttribute('data-type');
+        if (t === dealDraft.type) return;
+        dealDraft.type = t;
+        resetDealDraftFields();
+        renderDealComposer();
+      });
+    });
+  }
+
+  function renderDealComposer() {
+    renderTypePick();
+    document.getElementById('typeHelp').textContent = typeHelpText(dealDraft.type);
+    var wrap = document.getElementById('partnerPickWrap');
+    if (dealDraft.type === 'chain') {
+      wrap.classList.add('hidden');
+    } else {
+      wrap.classList.remove('hidden');
+      renderPartnerOptions(dealDraft.type);
+      document.getElementById('partnerSelect').onchange = function () {
+        dealDraft.partner = this.value || null;
+        dealDraft.price = null; dealDraft.penalty = null; dealDraft.qty = 1;
+        dealDraft.fact = null; dealDraft.factPrice = null; dealDraft.myShare = null;
+        renderFieldsBox();
+      };
+    }
+    renderFieldsBox();
+  }
+  // Called from the background render() loop: only a full dropdown rebuild
+  // if the roster actually changed (same guard pattern as before), so a
+  // mid-selection isn't wiped by an unrelated realtime update.
+  function renderDealComposerIfChanged() {
+    if (dealDraft.type === 'chain') { renderFieldsBox(); return; }
+    var groups = templatePartnersFor(dealDraft.type);
+    var sig = dealDraft.type + '|' + ['grower', 'processor', 'retailer'].map(function (t) { return t + ':' + (groups[t] || []).join(','); }).join('|');
+    var sel = document.getElementById('partnerSelect');
+    if (sig === partnerSelectSignature && sel.children.length > 1) { renderFieldsBox(); return; }
+    renderDealComposer();
+  }
+
+  function renderFieldsBox() {
+    var box = document.getElementById('sliderBox');
+    if (dealDraft.type === 'sell') return renderSellFields(box);
+    if (dealDraft.type === 'chain') return renderChainFields(box);
+    if (dealDraft.type === 'fact') return renderFactFields(box);
+    if (dealDraft.type === 'pool') return renderPoolFields(box);
+  }
+
+  // How many crops this grower still has to offer right now (CAPACITY minus
+  // what it's already locked in to the AI) -- a crop slider must never let a
+  // deal promise more crops than the grower actually has.
+  function growerCropsLeftFor(growerId) {
+    var e = engine();
+    var cap = (e && e.CONST && e.CONST.GROWER_CAPACITY) || 2;
+    var team = TEAMS.filter(function (t) { return t.archetype === growerId; })[0];
+    if (!team) return cap;
+    return Math.max(0, cap - C.cropsLockedCount(DECISIONS, team.seat_index));
+  }
+
+  // Engine's CONST.SLIDERS is the only source of truth (ROUND2-CONTRACT.md
+  // section A). qty is [min,max] only (no step/default); price/penalty are
+  // [min,max,step,default]. A crop deal's qty tops out at whatever the
+  // grower in this pair actually has left to sell.
+  function sliderSet(dir) {
+    var R = C.sliderRanges(engine());
+    if (!R) return null;
+    var qtyRange = R.qty.slice();
+    if (dir.good === 'crop') {
+      var left = growerCropsLeftFor(dir.from);
+      qtyRange[1] = Math.max(qtyRange[0], Math.min(qtyRange[1], left || qtyRange[0]));
+    }
+    return {
+      price: (dir.good === 'crop' ? R.crop.price : R.product.price),
+      qty: [qtyRange[0], qtyRange[1], qtyRange[2] || 1, qtyRange[3] != null ? qtyRange[3] : qtyRange[0]],
+      penalty: R.penalty
+    };
+  }
+
+  function renderSellFields(box) {
+    if (!dealDraft.partner) { box.innerHTML = ''; return; }
+    var dir = dealDirection(dealDraft.partner);
+    if (!dir) { box.innerHTML = '<p class="reason">Pick a partner above.</p>'; return; }
+    var S = sliderSet(dir);
+    if (!S) { box.innerHTML = '<p class="muted">Engine loading...</p>'; return; }
+    if (dealDraft.price == null) dealDraft.price = S.price[3];
+    if (dealDraft.penalty == null) dealDraft.penalty = S.penalty[3];
+    if (dealDraft.qty == null || dealDraft.qty < S.qty[0] || dealDraft.qty > S.qty[1]) dealDraft.qty = S.qty[3];
+    var qtyFixed = S.qty[0] === S.qty[1];
+    var html = '';
+    html += '<div class="slider-row"><label>How many<span class="valout">' + dealDraft.qty + (qtyFixed ? ' (fixed)' : '') + '</span></label>' +
+      '<input type="range" id="qtySlider" min="' + S.qty[0] + '" max="' + S.qty[1] + '" step="' + S.qty[2] + '" value="' + dealDraft.qty + '"' + (qtyFixed ? ' disabled' : '') + '></div>';
+    html += '<div class="slider-row"><label>Price (per ' + dir.good + ')<span class="valout" id="priceOut">' + C.money(dealDraft.price) + '</span></label>' +
+      '<input type="range" id="priceSlider" min="' + S.price[0] + '" max="' + S.price[1] + '" step="' + S.price[2] + '" value="' + dealDraft.price + '"></div>';
+    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="penaltyOut">' + C.money(dealDraft.penalty) + '</span></label>' +
+      '<input type="range" id="penaltySlider" min="' + S.penalty[0] + '" max="' + S.penalty[1] + '" step="' + S.penalty[2] + '" value="' + dealDraft.penalty + '"></div>';
+    html += '<div class="deal-preview" id="dealPreview"></div>';
+    box.innerHTML = html;
+    document.getElementById('qtySlider').addEventListener('input', function () { dealDraft.qty = parseInt(this.value, 10); renderPreview(); });
+    document.getElementById('priceSlider').addEventListener('input', function () { dealDraft.price = parseInt(this.value, 10); document.getElementById('priceOut').textContent = C.money(dealDraft.price); renderPreview(); });
+    document.getElementById('penaltySlider').addEventListener('input', function () { dealDraft.penalty = parseInt(this.value, 10); document.getElementById('penaltyOut').textContent = C.money(dealDraft.penalty); renderPreview(); });
+    renderPreview();
+  }
+
+  // 'chain' (ROUND2-CONTRACT.md section D): grower->processor->retailer in
+  // one deal, qty always 1 each leg. Writer is one of the three roles; the
+  // other two are picked here.
+  var CHAIN_FIELD_KEY = { grower: 'chainGrower', processor: 'chainProcessor', retailer: 'chainRetailer' };
+  function renderChainFields(box) {
+    var myTier = C.tierOf(MY_ID);
+    var neededRoles = ['grower', 'processor', 'retailer'].filter(function (r) { return r !== myTier; });
+    dealDraft[CHAIN_FIELD_KEY[myTier]] = MY_ID;
+    var partnersByRole = allFirmsByTier(MY_ID);
+    var html = '<p class="muted" style="font-size:0.85rem;">You are the ' + myTier + ' in this chain. Pick the other two.</p>';
+    neededRoles.forEach(function (role) {
+      var key = CHAIN_FIELD_KEY[role];
+      var ids = (partnersByRole[role] || []).filter(function (id) { return id !== MY_ID; });
+      if (dealDraft[key] && ids.indexOf(dealDraft[key]) === -1) dealDraft[key] = null;
+      html += '<div class="slider-row"><label style="display:block;">' + role.charAt(0).toUpperCase() + role.slice(1) + '</label>' +
+        '<select id="chainSelect_' + role + '"><option value="">Choose a ' + role + '</option>' + ids.map(function (id) {
+          var c = safeCardFor(id); var name = c ? c.name : id;
+          return '<option value="' + id + '"' + (dealDraft[key] === id ? ' selected' : '') + '>' + C.escapeHtml(name) + '</option>';
+        }).join('') + '</select></div>';
+    });
+    var R = C.sliderRanges(engine());
+    if (!R) {
+      html += '<p class="muted">Engine loading...</p>';
+      box.innerHTML = html;
+      neededRoles.forEach(function (role) {
+        document.getElementById('chainSelect_' + role).addEventListener('change', function () { dealDraft[CHAIN_FIELD_KEY[role]] = this.value || null; renderChainFields(box); });
+      });
+      return;
+    }
+    if (dealDraft.cropPrice == null) dealDraft.cropPrice = R.crop.price[3];
+    if (dealDraft.productPrice == null) dealDraft.productPrice = R.product.price[3];
+    if (dealDraft.chainPenalty == null) dealDraft.chainPenalty = R.penalty[3];
+    html += '<div class="slider-row"><label>Crop price<span class="valout" id="cropPriceOut">' + C.money(dealDraft.cropPrice) + '</span></label>' +
+      '<input type="range" id="cropPriceSlider" min="' + R.crop.price[0] + '" max="' + R.crop.price[1] + '" step="' + R.crop.price[2] + '" value="' + dealDraft.cropPrice + '"></div>';
+    html += '<div class="slider-row"><label>Product price<span class="valout" id="productPriceOut">' + C.money(dealDraft.productPrice) + '</span></label>' +
+      '<input type="range" id="productPriceSlider" min="' + R.product.price[0] + '" max="' + R.product.price[1] + '" step="' + R.product.price[2] + '" value="' + dealDraft.productPrice + '"></div>';
+    html += '<div class="slider-row"><label>Penalty if broken<span class="valout" id="chainPenaltyOut">' + C.money(dealDraft.chainPenalty) + '</span></label>' +
+      '<input type="range" id="chainPenaltySlider" min="' + R.penalty[0] + '" max="' + R.penalty[1] + '" step="' + R.penalty[2] + '" value="' + dealDraft.chainPenalty + '"></div>';
+    html += '<div class="deal-preview" id="dealPreview"></div>';
+    box.innerHTML = html;
+    neededRoles.forEach(function (role) {
+      document.getElementById('chainSelect_' + role).addEventListener('change', function () { dealDraft[CHAIN_FIELD_KEY[role]] = this.value || null; renderPreview(); });
+    });
+    document.getElementById('cropPriceSlider').addEventListener('input', function () { dealDraft.cropPrice = parseInt(this.value, 10); document.getElementById('cropPriceOut').textContent = C.money(dealDraft.cropPrice); renderPreview(); });
+    document.getElementById('productPriceSlider').addEventListener('input', function () { dealDraft.productPrice = parseInt(this.value, 10); document.getElementById('productPriceOut').textContent = C.money(dealDraft.productPrice); renderPreview(); });
+    document.getElementById('chainPenaltySlider').addEventListener('input', function () { dealDraft.chainPenalty = parseInt(this.value, 10); document.getElementById('chainPenaltyOut').textContent = C.money(dealDraft.chainPenalty); renderPreview(); });
+    renderPreview();
+  }
+
+  // 'fact' (ROUND2-CONTRACT.md section D): sell something I hold to any
+  // other firm. Price range isn't in CONST.SLIDERS (only CONST.TEMPLATES.fact
+  // will have it) -- the fact picker itself needs no guessed numbers, so it
+  // renders now; only the price slider waits on the engine.
+  function renderFactFields(box) {
+    if (!dealDraft.partner) { box.innerHTML = ''; return; }
+    var myCard = safeCardFor(MY_ID);
+    var facts = (myCard && myCard.facts) || [];
+    if (!facts.length) { box.innerHTML = '<p class="reason">You don\'t hold any facts to sell right now.</p>'; return; }
+    if (dealDraft.fact && !facts.some(function (f) { return f.id === dealDraft.fact; })) dealDraft.fact = null;
+    if (!dealDraft.fact) dealDraft.fact = facts[0].id;
+    var html = '<label for="factSelect">Which fact</label><select id="factSelect">' + facts.map(function (f) {
+      return '<option value="' + f.id + '"' + (dealDraft.fact === f.id ? ' selected' : '') + '>' + C.escapeHtml(f.text) + '</option>';
+    }).join('') + '</select>';
+    var e = engine();
+    var T = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES.fact;
+    var priceRange = T && T.fields && T.fields.price;
+    if (!priceRange) {
+      html += '<p class="muted">Engine loading (price)...</p>';
+      box.innerHTML = html;
+      document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderPreview(); });
+      return;
+    }
+    if (dealDraft.factPrice == null) dealDraft.factPrice = priceRange[3];
+    html += '<div class="slider-row"><label>Price<span class="valout" id="factPriceOut">' + C.money(dealDraft.factPrice) + '</span></label>' +
+      '<input type="range" id="factPriceSlider" min="' + priceRange[0] + '" max="' + priceRange[1] + '" step="' + priceRange[2] + '" value="' + dealDraft.factPrice + '"></div>';
+    html += '<div class="deal-preview" id="dealPreview"></div>';
+    box.innerHTML = html;
+    document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderPreview(); });
+    document.getElementById('factPriceSlider').addEventListener('input', function () { dealDraft.factPrice = parseInt(this.value, 10); document.getElementById('factPriceOut').textContent = C.money(dealDraft.factPrice); renderPreview(); });
+    renderPreview();
+  }
+
+  // 'pool' (merger, ROUND2-CONTRACT.md section D): myShare 10-90 step 10 is
+  // given literally in the contract text, so it's used as the range until
+  // CONST.TEMPLATES.pool.fields.myShare exists (not a guessed game-balance
+  // number -- the contract itself specifies it).
+  function renderPoolFields(box) {
+    if (!dealDraft.partner) { box.innerHTML = ''; return; }
+    var e = engine();
+    var T = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES.pool;
+    var shareRange = (T && T.fields && T.fields.myShare) || [10, 90, 10, 50];
+    if (dealDraft.myShare == null) dealDraft.myShare = shareRange[3];
+    var html = '<div class="slider-row"><label>Your share<span class="valout" id="myShareOut">' + dealDraft.myShare + '%</span></label>' +
+      '<input type="range" id="myShareSlider" min="' + shareRange[0] + '" max="' + shareRange[1] + '" step="' + shareRange[2] + '" value="' + dealDraft.myShare + '"></div>';
+    html += '<div class="deal-preview" id="dealPreview"></div>';
+    box.innerHTML = html;
+    document.getElementById('myShareSlider').addEventListener('input', function () { dealDraft.myShare = parseInt(this.value, 10); document.getElementById('myShareOut').textContent = dealDraft.myShare + '%'; renderPreview(); });
+    renderPreview();
+  }
+
+  // One-line plain-English preview, phrased from MY side (lead: never a raw
+  // clause, never a firm id), one per deal type.
+  function renderPreview() {
+    var el = document.getElementById('dealPreview');
+    if (!el) return;
+    var sentence = '';
+    if (dealDraft.type === 'sell' && dealDraft.partner) {
+      var dir = dealDirection(dealDraft.partner);
+      if (dir) {
+        var partnerName = cardName(dealDraft.partner);
+        var good = dir.good + (dealDraft.qty > 1 ? 's' : '');
+        sentence = dir.from === MY_ID
+          ? partnerName + ' buys ' + dealDraft.qty + ' ' + good + ' from you at ' + C.money(dealDraft.price) + ' each'
+          : 'You buy ' + dealDraft.qty + ' ' + good + ' from ' + partnerName + ' at ' + C.money(dealDraft.price) + ' each';
+        sentence += dealDraft.penalty > 0 ? '; whoever breaks pays ' + C.money(dealDraft.penalty) + '.' : '; breaking it costs nothing.';
+      }
+    } else if (dealDraft.type === 'chain' && dealDraft.chainGrower && dealDraft.chainProcessor && dealDraft.chainRetailer && dealDraft.cropPrice != null && dealDraft.productPrice != null) {
+      sentence = cardName(dealDraft.chainGrower) + ' sells its crop to ' + cardName(dealDraft.chainProcessor) + ' for ' + C.money(dealDraft.cropPrice) +
+        '; ' + cardName(dealDraft.chainProcessor) + ' sells the product to ' + cardName(dealDraft.chainRetailer) + ' for ' + C.money(dealDraft.productPrice) +
+        (dealDraft.chainPenalty > 0 ? '; whoever breaks either part pays ' + C.money(dealDraft.chainPenalty) + '.' : '; breaking it costs nothing.');
+    } else if (dealDraft.type === 'fact' && dealDraft.partner && dealDraft.fact) {
+      var myCard = safeCardFor(MY_ID);
+      var f = ((myCard && myCard.facts) || []).filter(function (x) { return x.id === dealDraft.fact; })[0];
+      var priceText = dealDraft.factPrice ? ' for ' + C.money(dealDraft.factPrice) : ', free';
+      sentence = 'You tell ' + cardName(dealDraft.partner) + ': "' + (f ? f.text : dealDraft.fact) + '"' + priceText + '.';
+    } else if (dealDraft.type === 'pool' && dealDraft.partner && dealDraft.myShare != null) {
+      sentence = 'You and ' + cardName(dealDraft.partner) + ' add up your gains and split them ' + dealDraft.myShare + '/' + (100 - dealDraft.myShare) + '.';
+    }
+    el.textContent = sentence;
+  }
+
+  // Builds {template:{type,fields}, parties} from dealDraft, or null if the
+  // current type's required fields aren't filled in yet.
+  function buildTemplateAndParties() {
+    if (dealDraft.type === 'sell') {
+      if (!dealDraft.partner) return null;
+      var dir = dealDirection(dealDraft.partner);
+      if (!dir) return null;
+      return {
+        template: { type: 'sell', fields: { partner: dealDraft.partner, qty: dealDraft.qty, price: dealDraft.price, penalty: dealDraft.penalty } },
+        parties: [MY_ID, dealDraft.partner]
+      };
+    }
+    if (dealDraft.type === 'chain') {
+      if (!dealDraft.chainGrower || !dealDraft.chainProcessor || !dealDraft.chainRetailer || dealDraft.cropPrice == null || dealDraft.productPrice == null) return null;
+      return {
+        template: { type: 'chain', fields: { grower: dealDraft.chainGrower, processor: dealDraft.chainProcessor, retailer: dealDraft.chainRetailer, cropPrice: dealDraft.cropPrice, productPrice: dealDraft.productPrice, penalty: dealDraft.chainPenalty || 0 } },
+        parties: [dealDraft.chainGrower, dealDraft.chainProcessor, dealDraft.chainRetailer]
+      };
+    }
+    if (dealDraft.type === 'fact') {
+      if (!dealDraft.partner || !dealDraft.fact) return null;
+      return {
+        template: { type: 'fact', fields: { partner: dealDraft.partner, fact: dealDraft.fact, price: dealDraft.factPrice || 0 } },
+        parties: [MY_ID, dealDraft.partner]
+      };
+    }
+    if (dealDraft.type === 'pool') {
+      if (!dealDraft.partner || dealDraft.myShare == null) return null;
+      return {
+        template: { type: 'pool', fields: { partner: dealDraft.partner, myShare: dealDraft.myShare } },
+        parties: [MY_ID, dealDraft.partner]
+      };
+    }
+    return null;
+  }
+
+  // ---- counter (ROUND2-CONTRACT.md section D): opens the composer
+  // prefilled from the original deal's template, partner set to the
+  // original writer. A 'fact' counter is a known rough edge -- the new
+  // writer (the original partner) usually doesn't hold the original fact,
+  // so the engine's own "writer must hold it" validation is the backstop
+  // here rather than special-cased client logic. ----
+  function startCounter(dealId) {
+    var d = DEALS.filter(function (x) { return x.id === dealId; })[0];
+    if (!d || !d.terms || !d.terms.template) { toast('Cannot counter this deal (no template to prefill from).', true); return; }
+    var tpl = d.terms.template, f = tpl.fields || {};
+    dealDraft.type = tpl.type;
+    resetDealDraftFields();
+    if (tpl.type === 'sell') {
+      dealDraft.partner = d.terms.writer;
+      dealDraft.qty = f.qty; dealDraft.price = f.price; dealDraft.penalty = f.penalty;
+    } else if (tpl.type === 'chain') {
+      dealDraft.chainGrower = f.grower; dealDraft.chainProcessor = f.processor; dealDraft.chainRetailer = f.retailer;
+      dealDraft.cropPrice = f.cropPrice; dealDraft.productPrice = f.productPrice; dealDraft.chainPenalty = f.penalty;
+    } else if (tpl.type === 'fact') {
+      dealDraft.partner = d.terms.writer; dealDraft.fact = f.fact; dealDraft.factPrice = f.price;
+    } else if (tpl.type === 'pool') {
+      dealDraft.partner = d.terms.writer;
+      dealDraft.myShare = f.myShare != null ? (100 - f.myShare) : null;
+    }
+    dealDraft.counterOf = dealId;
+    var banner = document.getElementById('counterBanner');
+    banner.classList.remove('hidden');
+    banner.textContent = "Countering " + cardName(d.terms.writer) + "'s deal. Edit the terms below, then send.";
+    document.getElementById('extrasText').value = '';
+    renderDealComposer();
+    document.getElementById('dealComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function exitCounterMode() {
+    dealDraft.counterOf = null;
+    document.getElementById('counterBanner').classList.add('hidden');
+  }
+
+  document.getElementById('sendDealBtn').addEventListener('click', function () {
+    var built = buildTemplateAndParties();
+    if (!built) { toast('Fill in the deal above first.', true); return; }
+    var e = engine();
+    var extras = document.getElementById('extrasText').value.trim();
+    var otherForSeat = built.parties.filter(function (p) { return p !== MY_ID; })[0];
+    var otherSeat = TEAMS.filter(function (t) { return t.archetype === otherForSeat; })[0];
+    var row = {
+      game_id: GAME.id, season: 1, type: 'open',
+      proposer_seat: MY.seat_index, partner_seat: otherSeat ? otherSeat.seat_index : MY.seat_index,
+      status: null, terms: null
+    };
+
+    if (dealDraft.type === 'sell') {
+      // Still the proven, landed path (ROUND2-CONTRACT.md section A) --
+      // sliderClause/readingFromSliders, not the not-yet-shipped
+      // templateClauses/readingFromTemplate, even though terms.template is
+      // also set now for forward-compat ("terms.sliders stays... for
+      // back-compat").
+      if (!e || typeof e.sliderClause !== 'function' || typeof e.readingFromSliders !== 'function') {
+        toast('Still loading the game engine. Try again in a moment.', true); return;
+      }
+      var sliders = built.template.fields;
+      var sliderTerms = C.newDealTerms(MY_ID, built.parties, extras, sliders);
+      sliderTerms.template = built.template;
+      if (!extras) {
+        var reading;
+        try { reading = e.readingFromSliders(MY_ID, sliders); }
+        catch (err) { toast('Could not build that deal: ' + err.message, true); return; }
+        row.status = 'read';
+        sliderTerms.confirmations[MY_ID] = true;
+        row.terms = Object.assign(sliderTerms, { text: '', reading: reading, reader: 'sliders' });
+      } else {
+        row.status = 'written';
+        row.terms = sliderTerms;
+      }
+    } else {
+      if (!e || typeof e.templateClauses !== 'function' || typeof e.readingFromTemplate !== 'function') {
+        toast('Still loading the game engine. Try again in a moment.', true); return;
+      }
+      var baseTerms = C.newDealTerms(MY_ID, built.parties, extras, null);
+      baseTerms.template = built.template;
+      if (!extras) {
+        var reading2;
+        try { reading2 = e.readingFromTemplate(MY_ID, built.template); }
+        catch (err) { toast('Could not build that deal: ' + err.message, true); return; }
+        row.status = 'read';
+        baseTerms.confirmations[MY_ID] = true;
+        row.terms = Object.assign(baseTerms, { text: '', reading: reading2, reader: 'sliders' });
+      } else {
+        row.status = 'written';
+        row.terms = baseTerms;
+      }
+    }
+
+    var counterOfId = dealDraft.counterOf;
+    if (counterOfId) row.terms.counter_of = counterOfId;
+
+    supa.from('weed_deals').insert(row).then(function (res) {
+      if (res.error) { showMsg('Could not send: ' + res.error.message, 'error'); return; }
+      var afterInsert = function () {
+        document.getElementById('extrasText').value = '';
+        exitCounterMode();
+        toast(extras ? 'Sent. The AI is reading it now.' : (counterOfId ? 'Counter sent.' : 'Signed. Waiting to confirm.'));
+        refreshDeals().then(render);
+      };
+      if (counterOfId) {
+        supa.from('weed_deals').update({ status: 'countered' }).eq('id', counterOfId).then(afterInsert);
+      } else {
+        afterInsert();
+      }
+    });
+  });
+
+  // ---- inbox: readings needing my confirmation, or the AI's question to me ----
+  function renderInbox() {
+    var mine = C.dealsForFirm(DEALS, MY_ID);
+    var needConfirm = mine.filter(function (d) { return C.needsMyConfirmation(d, MY_ID); });
+    var questions = mine.filter(function (d) { return d.status === 'question' && d.terms.writer === MY_ID; });
+    document.getElementById('inboxCount').textContent = (needConfirm.length + questions.length) ? '(' + (needConfirm.length + questions.length) + ')' : '';
+    var html = '';
+    questions.forEach(function (d) { html += renderQuestionCard(d); });
+    needConfirm.forEach(function (d) { html += renderConfirmCard(d); });
+    if (!html) html = '<p class="empty">Nothing waiting on you.</p>';
+    document.getElementById('inboxBox').innerHTML = html;
+    wireInboxButtons();
+  }
+
+  function otherPartyNames(d) {
+    return (d.terms.parties || []).filter(function (p) { return p !== MY_ID; }).map(function (p) {
+      var c = safeCardFor(p); return c ? c.name : p;
+    }).join(', ');
+  }
+
+  function renderConfirmCard(d) {
+    var reading = d.terms.reading || {};
+    var hasClauses = reading.clauses && reading.clauses.length > 0;
+    var html = '<div class="deal-card incoming" data-deal="' + d.id + '">' +
+      '<div><span class="chip warn">Confirm the reading</span> with ' + otherPartyNames(d) + '</div>' +
+      '<p>' + C.escapeHtml(reading.summary || '(no summary)') + '</p>';
+    if (reading.not_counted && reading.not_counted.length) {
+      html += '<div class="not-counted">Not counted: ' + reading.not_counted.map(C.escapeHtml).join(', ') + '</div>';
+    }
+    if (reading.promises && reading.promises.length) {
+      html += '<div class="not-counted">Promised (not enforced): ' + reading.promises.map(C.escapeHtml).join(', ') + '</div>';
+    }
+    // A reading with no enforceable clauses has nothing for anyone to be
+    // bound to -- rather than let it be "confirmed" as a no-op deal, block
+    // it here too (reader8 now also returns these as a question instead, but
+    // a professor Edit or the dev fake reader could still produce one).
+    // Counter (ROUND2-CONTRACT.md section D): only on deals with a template
+    // to prefill the composer from.
+    var counterBtn = (d.terms.template) ? ('<button class="secondary" data-counter="' + d.id + '">Counter</button>') : '';
+    if (!hasClauses) {
+      html += '<p class="reason">Nothing in this deal can be counted yet.</p>' +
+        '<div class="row" style="margin-top:0.5rem;"><button disabled>Confirm</button>' + counterBtn +
+        '<button class="danger" data-reject="' + d.id + '">That\'s not what we agreed</button></div></div>';
+      return html;
+    }
+    html += '<div class="row" style="margin-top:0.5rem;">' +
+      '<button data-confirm="' + d.id + '">Confirm</button>' + counterBtn +
+      '<button class="danger" data-reject="' + d.id + '">That\'s not what we agreed</button></div></div>';
+    return html;
+  }
+
+  function renderQuestionCard(d) {
+    var html = '<div class="deal-card incoming" data-deal="' + d.id + '">' +
+      '<div><span class="chip warn">Question from the AI</span></div>' +
+      '<p>' + C.escapeHtml(d.terms.question || '') + '</p>' +
+      '<textarea data-editbox="' + d.id + '" rows="3">' + C.escapeHtml(d.terms.text) + '</textarea>' +
+      '<button data-resend="' + d.id + '" style="margin-top:0.4rem;">Resend to the AI</button></div>';
+    return html;
+  }
+
+  function wireInboxButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-confirm]'), function (b) {
+      b.addEventListener('click', function () { confirmReading(b.getAttribute('data-confirm')); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reject]'), function (b) {
+      b.addEventListener('click', function () { rejectReading(b.getAttribute('data-reject')); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-counter]'), function (b) {
+      b.addEventListener('click', function () { startCounter(b.getAttribute('data-counter')); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-resend]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-resend');
+        var box = document.querySelector('[data-editbox="' + id + '"]');
+        resendDeal(id, box.value.trim());
+      });
+    });
+  }
+
+  function confirmReading(id) {
+    supa.from('weed_deals').select('*').eq('id', id).single().then(function (res) {
+      if (res.error || !res.data) return;
+      var d = res.data;
+      var terms = JSON.parse(JSON.stringify(d.terms));
+      terms.confirmations = terms.confirmations || {};
+      terms.confirmations[MY_ID] = true;
+      var newStatus = C.allPartiesConfirmed({ terms: terms }) ? 'confirmed' : 'read';
+      supa.from('weed_deals').update({ terms: terms, status: newStatus }).eq('id', id).then(function (r2) {
+        if (r2.error) { showMsg(r2.error.message, 'error'); return; }
+        toast(newStatus === 'confirmed' ? 'Signed.' : 'Confirmed. Waiting on the other side.');
+        refreshDeals().then(render);
+      });
+    });
+  }
+
+  function rejectReading(id) {
+    supa.from('weed_deals').update({ status: 'declined' }).eq('id', id).then(function () {
+      toast('Sent back. Nothing is signed.', true);
+      refreshDeals().then(render);
+    });
+  }
+
+  function resendDeal(id, newText) {
+    if (!newText) { toast('Write what you agreed first.', true); return; }
+    supa.from('weed_deals').update({ status: 'written', terms: Object.assign({}, DEALS.filter(function (d) { return d.id === id; })[0].terms, { text: newText, reading: null, question: null, confirmations: {} }) })
+      .eq('id', id).then(function (res) {
+        if (res.error) { showMsg(res.error.message, 'error'); return; }
+        toast('Resent to the AI.');
+        refreshDeals().then(render);
+      });
+  }
+
+  // ---- my deals ----
+  // deal id -> true while its "Edit and resend" box is expanded (a slow
+  // reading isn't an error, just worth letting the writer rewrite and
+  // resend rather than keep waiting -- lead, after reader8's timeout work).
+  var stuckEditExpanded = {};
+  var STUCK_READING_MS = 12000;
+
+  // A status 'read' deal's generic "Confirm the reading" label only makes
+  // sense for the party that still has to act. A party who already confirmed
+  // (the writer of a slider-only deal is now auto-confirmed -- lead, round 2)
+  // should see who it's still waiting on instead, not an action it already
+  // did.
+  function dealWaitingLabel(d) {
+    if (d.status !== 'read') return null;
+    var conf = C.confirmedBy(d);
+    if (!conf[MY_ID]) return null;
+    var parties = (d.terms && d.terms.parties) || [];
+    var waitingOn = parties.filter(function (p) { return p !== MY_ID && !conf[p]; }).map(cardName);
+    return waitingOn.length ? 'Waiting for ' + waitingOn.join(', ') : null;
+  }
+
+  function renderMyDeals() {
+    var mine = C.dealsForFirm(DEALS, MY_ID);
+    var box = document.getElementById('myDealsBox');
+    if (!mine.length) { box.innerHTML = '<p class="empty">No deals yet. Go talk to someone.</p>'; return; }
+    // ROUND2-CONTRACT.md section C: a written/reading deal's chip depends on
+    // whether the reader's heartbeat is fresh, not a static "Reading...".
+    var hbFresh = C.heartbeatFresh(DECISIONS, 30000);
+    box.innerHTML = mine.slice().reverse().map(function (d) {
+      var cls = d.status === 'confirmed' ? 'signed' : '';
+      var who = otherPartyNames(d);
+      var waitLabel = dealWaitingLabel(d);
+      var chipLabel = waitLabel || C.statusLabelForStudent(d, hbFresh);
+      var chipClass = waitLabel ? 'wait' : C.statusClassForStudent(d, hbFresh);
+      var html = '<div class="deal-card ' + cls + '" data-mydeal="' + d.id + '">' +
+        '<span class="chip ' + chipClass + '">' + chipLabel + '</span> with ' + (who || '...') +
+        '<div class="muted" style="margin-top:0.3rem; font-size:0.88rem;">' + C.escapeHtml((d.terms.reading && d.terms.reading.summary) || d.terms.text) + '</div>';
+      var elapsed = C.readingElapsedMs(d);
+      if (elapsed != null && elapsed > STUCK_READING_MS) {
+        if (stuckEditExpanded[d.id]) {
+          html += '<textarea data-stuck-editbox="' + d.id + '" rows="3">' + C.escapeHtml(d.terms.text) + '</textarea>' +
+            '<button data-stuck-resend="' + d.id + '" style="margin-top:0.4rem;">Resend to the AI</button>';
+        } else {
+          html += '<div class="reason" style="margin-top:0.4rem;">Still reading, taking longer than usual.' +
+            ' <a href="#" data-stuck-expand="' + d.id + '">Edit and resend</a></div>';
+        }
+      }
+      html += '</div>';
+      return html;
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-stuck-expand]'), function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        stuckEditExpanded[a.getAttribute('data-stuck-expand')] = true;
+        renderMyDeals();
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-stuck-resend]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-stuck-resend');
+        var box2 = document.querySelector('[data-stuck-editbox="' + id + '"]');
+        delete stuckEditExpanded[id];
+        resendDeal(id, box2.value.trim());
+      });
+    });
+  }
+
+  // ---- orders phase (BO8.orderOptions returns {options:[{dealId,clauseId,
+  // key,summary,honor:{moneyChange,plain},breakOption:{moneyChange,plain}}],
+  // constraints:[string]}) ----
+  // Plain-word sentence for a crop/product clause, using FIRM NAMES never
+  // ids (lead: an undergrad reading this screen should never see "G6").
+  function cardName(id) { var c = safeCardFor(id); return c ? c.name : id; }
+  function ordinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+  function clauseSentence(clause) {
+    var fromName = cardName(clause.from), toName = cardName(clause.to);
+    if (clause.good === 'crop') {
+      var what = clause.qty === 2 ? 'both its crops' : 'its crop';
+      return fromName + ' delivers ' + what + ' to ' + toName + ' for ' + C.money(clause.price) + '.';
+    }
+    if (clause.good === 'product') {
+      var what2 = clause.qty === 2 ? 'both products' : 'one product';
+      return fromName + ' delivers ' + what2 + ' to ' + toName + ' for ' + C.money(clause.price) + '.';
+    }
+    return fromName + ' and ' + toName + ': ' + clause.type + '.';
+  }
+  // What actually happens if I break THIS clause, in plain words (lead's
+  // example: "you pay the $100k penalty and the AI buys your product").
+  function breakDetailText(clause) {
+    var parts = [];
+    var penalty = clause.penalty || 0;
+    if (penalty > 0) parts.push('you pay the ' + C.money(penalty) + ' penalty');
+    if (clause.good === 'crop') parts.push('you keep that crop to use elsewhere or sell to the AI');
+    else if (clause.good === 'product' && clause.from === MY_ID) parts.push('the AI buys your product instead');
+    else if (clause.good === 'product' && clause.to === MY_ID) parts.push(cardName(clause.from) + ' sells it to the AI instead');
+    return parts.length ? ' (' + parts.join(', and ') + ')' : '';
+  }
+
+  function renderOrders() {
+    var e = engine();
+    var box = document.getElementById('ordersBox');
+    if (!e || typeof e.orderOptions !== 'function') { box.innerHTML = '<p class="muted">Engine loading...</p>'; return; }
+    var opts;
+    try { opts = e.orderOptions(engineState(), MY_ID); } catch (err) { console.warn(err); box.innerHTML = '<p class="muted">Could not load order options.</p>'; return; }
+    var options = (opts && opts.options) || [];
+    if (!options.length) { box.innerHTML = '<p class="empty">You have no confirmed deliveries to decide on. Your fallback runs automatically.</p>'; }
+    var choices = ordersDraft.choices;
+    var html = '';
+    // Pools are binding -- not a secret-orders choice, can't be broken
+    // (ROUND2-CONTRACT.md section D) -- so they're listed as information,
+    // never as an Honor/Break clause row.
+    confirmedPoolsFor(MY_ID).forEach(function (d) {
+      html += '<div class="deal-card signed">' + C.escapeHtml(poolSentence(d)) + ' Binding: it can\'t be broken.</div>';
+    });
+    if (opts.constraints && opts.constraints.length) {
+      html += '<p class="muted">' + opts.constraints.map(C.escapeHtml).join(' ') + '</p>';
+    }
+    html += options.map(function (o) {
+      var chosen = choices[o.key] || 'honor';
+      var clause = C.findClause(DEALS, o.dealId, o.clauseId);
+      var sentence = clause ? clauseSentence(clause) : 'A clause between you and another firm.';
+      // engine orderOptions reports the final post-pool GAIN already
+      var honorGain = o.honor.moneyChange;
+      var breakGain = o.breakOption.moneyChange;
+      var breakDetail = clause ? breakDetailText(clause) : '';
+      // Unmistakable chosen state (lead): the selected button is FILLED, the
+      // other OUTLINED (.secondary) -- previously Break was always a filled
+      // red "danger" button even when Honor was the actual choice, making it
+      // look selected either way. Default (nothing clicked yet) is Honor,
+      // and is shown as chosen, matching the engine's own default-to-honor.
+      var honorBtnClass = chosen === 'honor' ? '' : 'secondary';
+      var breakBtnClass = chosen === 'break' ? 'danger' : 'secondary';
+      return '<div class="clause-row">' +
+        '<div class="clause-text"><strong>' + C.escapeHtml(sentence) + '</strong><br>' +
+        '<span class="muted" style="font-size:0.85rem;">Honor: your gain ends at ' + C.signedMoney(honorGain) +
+        '. Break: your gain ends at ' + C.signedMoney(breakGain) + breakDetail + '.</span><br>' +
+        '<span class="ok" style="font-size:0.85rem; font-weight:700;">You chose: ' + (chosen === 'honor' ? 'Honor' : 'Break') + '</span></div>' +
+        '<div class="seg" style="display:flex; gap:0.4rem;">' +
+        '<button type="button" class="' + honorBtnClass + '" data-choice="' + o.key + '" data-v="honor">Honor</button>' +
+        '<button type="button" class="' + breakBtnClass + '" data-choice="' + o.key + '" data-v="break">Break</button>' +
+        '</div></div>';
+    }).join('');
+    if (C.tierOf(MY_ID) === 'processor' && options.length) {
+      html += '<label style="display:block; margin-top:0.6rem;"><input type="checkbox" id="buyAiIfShort" ' + (ordersDraft.buyAiIfShort ? 'checked' : '') + '> If I\'m short, buy crop from the AI to fill my honored deals</label>';
+    }
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll('[data-choice]'), function (b) {
+      b.addEventListener('click', function () {
+        var key = b.getAttribute('data-choice');
+        ordersDraft.choices[key] = b.getAttribute('data-v');
+        if (!ordersDraft.rank.length) ordersDraft.rank = options.map(function (o) { return o.key; });
+        renderOrders();
+      });
+    });
+    var aiBox = document.getElementById('buyAiIfShort');
+    if (aiBox) aiBox.addEventListener('change', function () { ordersDraft.buyAiIfShort = this.checked; });
+  }
+  var ordersDraft = { choices: {}, rank: [], buyAiIfShort: true };
+
+  document.getElementById('submitOrdersBtn').addEventListener('click', function () {
+    C.insertDecision(supa, GAME.id, 1, MY.seat_index, 'orders', {
+      firm: MY_ID, choices: ordersDraft.choices, rank: ordersDraft.rank, buyAiIfShort: ordersDraft.buyAiIfShort, submitted_at: new Date().toISOString()
+    }).then(function (res) {
+      if (res.error) { showMsg(res.error.message, 'error'); return; }
+      document.getElementById('ordersSavedNote').textContent = 'Orders saved. You can change them until the reveal.';
+      toast('Orders submitted.');
+      refreshDecisions();
+    });
+  });
+
+  // ---- results ----
+  function renderResults() {
+    var result = GAME.world.result;
+    var box = document.getElementById('resultsBox');
+    if (!result || !result.firms || !result.firms[MY_ID]) { box.innerHTML = '<p class="muted">Waiting for the professor to reveal...</p>'; return; }
+    var mine = result.firms[MY_ID];
+    var tierPlural = { grower: 'growers', processor: 'processors', retailer: 'retailers' }[C.tierOf(MY_ID)];
+    var tiers = C.rankByTier(result.firms, TEAMS);
+    var myTierGroup = tiers[C.tierOf(MY_ID)] || { ranked: [], others: [] };
+    var myRow = myTierGroup.ranked.filter(function (r) { return r.id === MY_ID; })[0];
+    var html = '<div class="big ' + (mine.gain >= 0 ? 'gain-pos' : 'gain-neg') + '">' + C.signedMoney(mine.gain) + '</div>';
+    if (myRow) {
+      var n = myTierGroup.ranked.length;
+      // "winner" only makes sense with something to have won against (lead:
+      // "Top of 1 processors - winner" read oddly in a 1-claimed-seat test).
+      var isWinner = myRow.rank === 1 && n >= 2;
+      // "student-run" (lead, round 2): only CLAIMED teams are ranked here
+      // (AI-covered seats never compete for the win), so "1st of 1
+      // processors" read as if that were the whole game's processor count.
+      html += '<div class="muted" style="margin:-0.3rem 0 0.8rem;">' + ordinal(myRow.rank) + ' of ' + n + ' student-run ' + tierPlural + (isWinner ? ' — winner' : '') + '.</div>';
+    } else {
+      html += '<div class="muted" style="margin:-0.3rem 0 0.8rem;">AI-covered (not competing for the ' + tierPlural + ' win).</div>';
+    }
+    html += '<table><tr><th>Line</th><th>Amount</th></tr>';
+    (mine.ledger || []).forEach(function (l) {
+      html += '<tr><td>' + C.escapeHtml(l.label) + '</td><td class="' + (l.amount >= 0 ? 'gain-pos' : 'gain-neg') + '">' + C.signedMoney(l.amount) + '</td></tr>';
+    });
+    html += '</table>';
+    if (result.breaks && result.breaks.length) {
+      // Names the deal PARTNER and the actual penalty paid (lead): "Evergreen
+      // Acres broke its deal with Pine Ridge Processing and paid a $100k
+      // penalty." / "...and paid no penalty."
+      html += '<h3 style="margin-top:1rem;">Breaks</h3><ul>' + result.breaks.map(function (b) {
+        if (typeof b === 'string') return '<li>' + C.escapeHtml(b) + '</li>';
+        var breakerName = cardName(b.from) || b.from;
+        var clause = C.clauseForBreakKey(DEALS, b.key);
+        if (!clause) {
+          var reason = b.reason || 'broke a clause';
+          return '<li>' + C.escapeHtml(breakerName + ': ' + reason.charAt(0).toUpperCase() + reason.slice(1) + '.') + '</li>';
+        }
+        var otherId = clause.from === b.from ? clause.to : clause.from;
+        var otherName = cardName(otherId) || otherId;
+        var penalty = clause.penalty || 0;
+        var penaltyText = penalty > 0 ? ('paid a ' + C.money(penalty) + ' penalty') : 'paid no penalty';
+        return '<li>' + C.escapeHtml(breakerName + ' broke its deal with ' + otherName + ' and ' + penaltyText + '.') + '</li>';
+      }).join('') + '</ul>';
+    }
+    box.innerHTML = html;
+  }
+
+  // ---- toasts on status change ----
+  function detectAndToastStatusChanges() {
+    var mine = C.dealsForFirm(DEALS, MY_ID);
+    mine.forEach(function (d) {
+      var prev = lastStatusById[d.id];
+      if (prev && prev !== d.status) {
+        if (d.status === 'read') toast('A reading is ready to confirm.');
+        else if (d.status === 'confirmed') toast('A deal was signed.');
+        else if (d.status === 'question') toast('The AI has a question about your deal.');
+        else if (d.status === 'declined') toast('A deal was marked not agreed.', true);
+      }
+      lastStatusById[d.id] = d.status;
+    });
+  }
+})();
+</script>
+</body>
+</html>

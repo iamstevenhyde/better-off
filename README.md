@@ -1,0 +1,1 @@
+Better Off: Open Deals is a classroom negotiation game built for MBA 546 at Boise State University; students play the vendor-chain roles in-browser while the AI reader that scores free-text deal terms runs on the instructor's laptop during class.

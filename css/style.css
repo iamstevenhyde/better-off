@@ -1,0 +1,110 @@
+/* style.css -- shared look for Better Off: Chains (v7). Light background,
+   high contrast, big numbers, readable on a 13" laptop. */
+:root {
+  --paper: #f4f1ea;
+  --panel: #ffffff;
+  --ink: #1d2730;
+  --muted: #5b6a75;
+  --border: #d9d2c2;
+  --accent: #1f6f5c;
+  --accent-ink: #ffffff;
+  --rust: #b5472b;
+  --gold: #9b7a1f;
+  --good: #1f6f5c;
+  --bad: #b5472b;
+  --grower: #3a6b3d;
+  --processor: #8a5a1f;
+  --retailer: #2a4d7a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+}
+h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; margin: 0 0 0.4rem; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+a { color: var(--accent); }
+button {
+  font-family: inherit; font-size: 0.95rem; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); border: none;
+  border-radius: 6px; padding: 0.5rem 0.9rem; font-weight: 700;
+}
+button.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--border); }
+button.danger { background: var(--rust); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.toggle.on { background: var(--good); }
+button.toggle.off { background: #9aa4ab; }
+button.secondary.on, .vol-btn.on, .term-btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+input[type=text], input[type=number], select {
+  font-family: inherit; font-size: 0.95rem; padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border); border-radius: 5px; background: var(--panel); color: var(--ink);
+}
+input[type=range] { width: 100%; }
+.panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem;
+}
+.big { font-size: 2.2rem; font-weight: 700; font-family: 'Fraunces', Georgia, serif; }
+.gain-pos { color: var(--good); } .gain-neg { color: var(--bad); }
+.muted { color: var(--muted); }
+.tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px; color: #fff;
+}
+.tag.grower { background: var(--grower); }
+.tag.processor { background: var(--processor); }
+.tag.retailer { background: var(--retailer); }
+.row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.col { display: flex; flex-direction: column; gap: 0.5rem; }
+.card-art { width: 100%; max-width: 220px; border-radius: 8px; border: 1px solid var(--border); display: block; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.phase-banner {
+  background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; display: flex;
+  align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.phase-banner .phase { font-weight: 700; font-family: 'Fraunces', Georgia, serif; font-size: 1.1rem; }
+.phase-banner .timer { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; }
+.tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border); margin: 1rem 0; flex-wrap: wrap; }
+.tabs button { background: transparent; color: var(--muted); border-radius: 6px 6px 0 0; padding: 0.5rem 1rem; }
+.tabs button.active { background: var(--panel); color: var(--ink); border: 1px solid var(--border); border-bottom-color: var(--panel); margin-bottom: -2px; }
+main { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+.claimed { opacity: 0.5; }
+.hidden { display: none !important; }
+.badge-event { background: var(--gold); color: #fff; padding: 0.5rem 0.8rem; border-radius: 8px; font-weight: 700; }
+.deal-line { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.1rem 0; }
+.reason { color: var(--bad); font-size: 0.85rem; }
+.ok { color: var(--good); font-size: 0.85rem; }
+
+/* v8 additions (DESIGN-v8.md section 8): deal cards, confirm boxes, order
+   clauses, status chips, heartbeat light, toasts. */
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(140px);
+  background: var(--accent); color: #fff; font-weight: 700; padding: 0.8rem 1.2rem; border-radius: 8px;
+  transition: transform 0.25s; z-index: 1000; box-shadow: 0 6px 20px rgba(0,0,0,0.2); max-width: 80vw; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.bad { background: var(--rust); }
+.chip { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+  padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--border); color: var(--ink); }
+.chip.ok { background: var(--good); color: #fff; }
+.chip.wait { background: #9aa4ab; color: #fff; }
+.chip.warn { background: var(--gold); color: #fff; }
+.chip.bad { background: var(--bad); color: #fff; }
+.deal-card { border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; margin: 0.6rem 0; background: var(--panel); }
+.deal-card.incoming { border-color: var(--gold); background: #fff8e6; }
+.deal-card.signed { border-color: var(--accent); background: #eef6f2; }
+.q { display: inline-flex; align-items: center; justify-content: center; width: 1.1rem; height: 1.1rem; border-radius: 50%;
+  background: var(--border); color: var(--ink); font-size: 0.7rem; font-weight: 700; cursor: help; position: relative;
+  margin-left: 0.15rem; vertical-align: middle; }
+.q:hover::after, .q:focus::after { content: attr(data-tip); position: absolute; left: 50%; bottom: 130%; transform: translateX(-50%);
+  width: 230px; background: var(--ink); color: #fff; font-weight: 400; font-size: 0.82rem; line-height: 1.4;
+  padding: 0.5rem 0.65rem; border-radius: 6px; z-index: 50; text-align: left; }
+.hblight { display: inline-block; width: 0.65rem; height: 0.65rem; border-radius: 50%; background: #9aa4ab; margin-right: 0.35rem; }
+.hblight.green { background: var(--good); } .hblight.red { background: var(--bad); }
+.not-counted { color: var(--muted); font-size: 0.85rem; font-style: italic; margin-top: 0.3rem; }
+.clause-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+textarea { font-family: inherit; font-size: 0.95rem; padding: 0.5rem 0.6rem; border: 1px solid var(--border);
+  border-radius: 5px; background: var(--panel); color: var(--ink); width: 100%; resize: vertical; }
