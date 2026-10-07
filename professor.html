@@ -9,7 +9,7 @@
 <title>Better Off: Open Deals | Professor</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%274%27 y=%274%27 width=%2724%27 height=%2724%27 rx=%274%27 fill=%27%231d2730%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261005a">
+<link rel="stylesheet" href="css/style.css?v=20261006b">
 <style>
   .editform textarea { font-family:'JetBrains Mono', monospace; font-size:0.82rem; min-height:90px; }
   .editform label { display:block; font-weight:700; margin:0.5rem 0 0.2rem; }
@@ -66,7 +66,7 @@
 
     <div class="panel">
       <h3>Roster</h3>
-      <table id="cardsTable"><tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Seat link</th><th></th></tr></table>
+      <table id="cardsTable"><tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Capacity</th><th>Seat link</th><th></th></tr></table>
     </div>
 
     <div class="panel">
@@ -91,10 +91,10 @@
   </div>
 </main>
 
-<script src="config.js?v=20261005a"></script>
+<script src="config.js?v=20261006b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core8.js?v=20261005a"></script>
-<script src="engine/bo8_engine.bundle.js?v=20261005a"></script>
+<script src="js/core8.js?v=20261006b"></script>
+<script src="engine/bo8_engine.bundle.js?v=20261006b"></script>
 <script>
 (function () {
   'use strict';
@@ -224,7 +224,28 @@
       C.fetchTeams(supa, GAME.id).then(function (r) { TEAMS = r.data || []; }),
       C.fetchDeals(supa, GAME.id).then(function (r) { DEALS = r.data || []; }),
       C.fetchDecisions(supa, GAME.id).then(function (r) { DECISIONS = r.data || []; })
-    ]).then(renderAll);
+    ]).then(renderAll).then(maybeSyncAiCovered);
+  }
+
+  // Fix 1 (late-joining seats, 2026-10-06): world.ai_covered was only ever
+  // written at Start Deals and on the manual AI-toggle click, so a seat
+  // claimed by a late student during the deals phase stayed "AI-covered" in
+  // the export/debrief/roster for the rest of the game even though the
+  // student was actually writing and confirming deals (SUAXJ R2, R6: first
+  // deals 13 and 15 minutes in). Every poll/realtime refresh during deals or
+  // orders now recomputes the live AI-covered set the same way Start Deals
+  // does (isBotSeat: is_ai toggled on, OR still unclaimed) and writes it back
+  // only when it actually changed, so a claim removes the seat from
+  // ai_covered within one refresh cycle. Only the writer professor tab does
+  // this (DESIGN-v8.md section 11: only the professor writes world).
+  function maybeSyncAiCovered() {
+    if (!amWriter || !GAME || !GAME.world) return;
+    var phase = GAME.world.phase;
+    if (phase !== 'deals' && phase !== 'orders') return;
+    var current = TEAMS.filter(isBotSeat).map(function (t) { return t.archetype; }).slice().sort();
+    var existing = (GAME.world.ai_covered || []).slice().sort();
+    if (JSON.stringify(current) === JSON.stringify(existing)) return;
+    return syncAiCovered();
   }
 
   function subscribe() {
@@ -276,7 +297,8 @@
   }
 
   function renderCards() {
-    var html = '<tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Seat link</th><th></th></tr>';
+    var html = '<tr><th>Firm</th><th>Tier</th><th>Claimed by</th><th>AI covers</th><th>Capacity</th><th>Seat link</th><th></th></tr>';
+    var e0 = engine();
     TEAMS.forEach(function (t) {
       var e = engine();
       var name = (e && typeof e.cardFor === 'function') ? (function () { try { return (e.cardFor(t.archetype) || {}).name; } catch (err) { return null; } })() : null;
@@ -286,9 +308,20 @@
       var toggleCell = unclaimed
         ? '<button class="toggle on" disabled title="Unclaimed seats are AI-covered automatically">Auto</button>'
         : '<button class="toggle ' + (t.is_ai ? 'on' : 'off') + '" data-ai-toggle="' + t.id + '">' + (t.is_ai ? 'On' : 'Off') + '</button>';
+      // Per-firm over-capacity indicator (fix 2, small addition): same
+      // BO8.capacityStatus the student screen and resolve() use, so the
+      // professor sees who's already overbooked before anyone has to break.
+      var capCell = '';
+      if (e0 && typeof e0.capacityStatus === 'function') {
+        try {
+          var cs = e0.capacityStatus(engineState(), t.archetype, []);
+          if (cs.cap) capCell = cs.committed + '/' + cs.cap + (cs.overBy > 0 ? ' <span class="chip bad">OVER</span>' : '');
+        } catch (err) { /* engine not ready */ }
+      }
       html += '<tr><td>' + (name || t.archetype) + ' <span class="mono muted">' + t.archetype + '</span></td><td><span class="tag ' + C.tierOf(t.archetype) + '">' + C.tierOf(t.archetype) + '</span></td>' +
         '<td>' + (unclaimed ? '<span class="muted">unclaimed</span>' : C.escapeHtml(t.name)) + '</td>' +
         '<td>' + toggleCell + '</td>' +
+        '<td>' + capCell + '</td>' +
         '<td><button class="secondary" data-copy-link="' + encodeURIComponent(link) + '">Copy link</button></td>' +
         '<td><button class="danger" data-reset-seat="' + t.id + '">Reset seat</button></td></tr>';
     });
@@ -331,6 +364,16 @@
   // which decays its crop to the floor instead of running standalone --
   // lead flagged this as silently distorting room%/leaderboard, so every
   // unclaimed seat counts as AI-covered automatically, with no toggle needed.
+  // Deterministic seed for reassignStrandedFacts (fix 7), from the game's
+  // own join code -- same game always reassigns the same way if Start Deals
+  // is somehow clicked twice (writeWorldCAS's phase guard means that can't
+  // actually change anything, but the hash itself is still deterministic).
+  function seedFromCode(code) {
+    var h = 0;
+    for (var i = 0; i < (code || '').length; i++) { h = (h * 31 + code.charCodeAt(i)) | 0; }
+    return h;
+  }
+
   function syncAiCovered() {
     return queue(function () {
       return C.writeWorldCAS(supa, GAME.id, function (game) {
@@ -444,6 +487,18 @@
             // AI-covered for the whole game, in the same write as the phase
             // flip, so a forgotten roster toggle can never distort scoring.
             world.ai_covered = TEAMS.filter(isBotSeat).map(function (t) { return t.archetype; });
+            // Fix 7 (stranded facts, 2026-10-06): a fact whose every holder
+            // is AI-covered can never be sold (SUAXJ: R2 Canopy Corner, R6
+            // Firelight). Reassign those facts, deterministically given the
+            // game's own join code, to claimed firms that aren't in the
+            // combo and don't already hold its other fragment. Stored on
+            // world so cardFor()/the export/debrief see the final holders.
+            var e = engine();
+            if (e && typeof e.reassignStrandedFacts === 'function') {
+              try {
+                world.factReassign = e.reassignStrandedFacts(world.ai_covered, seedFromCode(GAME.join_code));
+              } catch (err) { console.warn('reassignStrandedFacts failed', err); world.factReassign = {}; }
+            }
             return { world: world, phase: 'deals' };
           }).then(function (game) { GAME = game; });
         });

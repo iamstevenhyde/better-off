@@ -13,1102 +13,7 @@
   // MARKET_DATA is replaced by embed.js with the contents of market.json.
   // Left null here so the raw engine file can also run in node against a
   // market.json sitting next to it (test/sim use that path).
-  var MARKET_DATA = {
-  "firms": [
-    {
-      "id": "G1",
-      "name": "Cascade Canopy Co",
-      "tier": "grower",
-      "plain": "a fresh-frozen grower: whole plants frozen at cut, prized for rosin",
-      "art": "mj/postcard_grower_2_0.png"
-    },
-    {
-      "id": "G2",
-      "name": "Blue Mountain Buds",
-      "tier": "grower",
-      "plain": "a living-soil craft grower: small batches, top-shelf buds",
-      "art": "mj/postcard_grower_3_0.png"
-    },
-    {
-      "id": "G3",
-      "name": "Willamette Grow Works",
-      "tier": "grower",
-      "plain": "an outdoor grower: cheapest biomass, the most volume",
-      "art": "mj/postcard_grower_4_0.png"
-    },
-    {
-      "id": "G4",
-      "name": "High Desert Harvest",
-      "tier": "grower",
-      "plain": "a rare-genetics grower: strains nobody else has",
-      "art": "mj/postcard_grower_5_0.png"
-    },
-    {
-      "id": "G5",
-      "name": "Sasquatch Seedlings",
-      "tier": "grower",
-      "plain": "a certified organic grower: clean and green",
-      "art": "mj/postcard_grower_6_0.png"
-    },
-    {
-      "id": "G6",
-      "name": "Evergreen Acres",
-      "tier": "grower",
-      "plain": "a year-round greenhouse grower: steady, uniform flower",
-      "art": "mj/postcard_grower_7_0.png"
-    },
-    {
-      "id": "P1",
-      "name": "Pine Ridge Processing",
-      "tier": "processor",
-      "plain": "a co-packer: makes products under other companies' brands",
-      "art": "mj/postcard_processor_2_0.png"
-    },
-    {
-      "id": "P2",
-      "name": "Cedar Creek Extracts",
-      "tier": "processor",
-      "plain": "a distillate and vape cartridge maker",
-      "art": "mj/postcard_processor_3_0.png"
-    },
-    {
-      "id": "P3",
-      "name": "North Coast Concentrates",
-      "tier": "processor",
-      "plain": "a solventless rosin press, no chemicals used",
-      "art": "mj/postcard_processor_4_0.png"
-    },
-    {
-      "id": "P4",
-      "name": "Timberline Terpenes",
-      "tier": "processor",
-      "plain": "a licensed edibles kitchen",
-      "art": "mj/postcard_processor_5_0.png"
-    },
-    {
-      "id": "P5",
-      "name": "Columbia Gorge Processing",
-      "tier": "processor",
-      "plain": "an automated pre-roll line",
-      "art": "mj/postcard_processor_2_1.png"
-    },
-    {
-      "id": "R1",
-      "name": "The Green Door",
-      "tier": "retailer",
-      "plain": "a downtown flagship shop: premium shelf, big spenders",
-      "art": "mj/postcard_retail_2_0.png"
-    },
-    {
-      "id": "R2",
-      "name": "Canopy Corner",
-      "tier": "retailer",
-      "plain": "a shop with a loyalty program that knows what its shoppers rebuy",
-      "art": "mj/postcard_retail_3_0.png"
-    },
-    {
-      "id": "R3",
-      "name": "High Note Dispensary",
-      "tier": "retailer",
-      "plain": "a wellness-focused shop",
-      "art": "mj/postcard_retail_4_0.png"
-    },
-    {
-      "id": "R4",
-      "name": "Trailhead Cannabis",
-      "tier": "retailer",
-      "plain": "a highway shop on the tourist corridor: volume traffic",
-      "art": "mj/postcard_retail_5_0.png"
-    },
-    {
-      "id": "R5",
-      "name": "Basecamp Buds",
-      "tier": "retailer",
-      "plain": "a delivery-only shop",
-      "art": "mj/postcard_retail_6_0.png"
-    },
-    {
-      "id": "R6",
-      "name": "Firelight Dispensary",
-      "tier": "retailer",
-      "plain": "a shop with a loyal medical patient base",
-      "art": "mj/postcard_retail_7_0.png"
-    }
-  ],
-  "fitGP": {
-    "G1": {
-      "P1": 100,
-      "P2": 0,
-      "P3": 200,
-      "P4": 0,
-      "P5": 0
-    },
-    "G2": {
-      "P1": 100,
-      "P2": 0,
-      "P3": 0,
-      "P4": 200,
-      "P5": 0
-    },
-    "G3": {
-      "P1": 0,
-      "P2": 200,
-      "P3": 0,
-      "P4": 0,
-      "P5": 100
-    },
-    "G4": {
-      "P1": 0,
-      "P2": 100,
-      "P3": 0,
-      "P4": 0,
-      "P5": 200
-    },
-    "G5": {
-      "P1": 200,
-      "P2": 0,
-      "P3": 100,
-      "P4": 0,
-      "P5": 0
-    },
-    "G6": {
-      "P1": 200,
-      "P2": 0,
-      "P3": 0,
-      "P4": 100,
-      "P5": 0
-    }
-  },
-  "fitPR": {
-    "P1": {
-      "R1": 200,
-      "R2": 0,
-      "R3": 0,
-      "R4": 0,
-      "R5": 100,
-      "R6": 0
-    },
-    "P2": {
-      "R1": 0,
-      "R2": 0,
-      "R3": 0,
-      "R4": 200,
-      "R5": 0,
-      "R6": 0
-    },
-    "P3": {
-      "R1": 0,
-      "R2": 0,
-      "R3": 200,
-      "R4": 0,
-      "R5": 200,
-      "R6": 0
-    },
-    "P4": {
-      "R1": 0,
-      "R2": 0,
-      "R3": 0,
-      "R4": 0,
-      "R5": 0,
-      "R6": 200
-    },
-    "P5": {
-      "R1": 0,
-      "R2": 200,
-      "R3": 0,
-      "R4": 0,
-      "R5": 0,
-      "R6": 0
-    }
-  },
-  "recipes": [
-    {
-      "id": "RECIPE_A",
-      "label": "Downtown flagship line",
-      "grower": "G1",
-      "processor": "P1",
-      "retailer": "R1",
-      "pay": {
-        "G1": 100,
-        "P1": 100,
-        "R1": 100
-      }
-    },
-    {
-      "id": "RECIPE_B",
-      "label": "Live rosin wellness",
-      "grower": "G1",
-      "processor": "P3",
-      "retailer": "R1",
-      "pay": {
-        "G1": 100,
-        "P3": 100,
-        "R1": 100
-      }
-    },
-    {
-      "id": "RECIPE_C",
-      "label": "Craft carts, loyalty program",
-      "grower": "G2",
-      "processor": "P1",
-      "retailer": "R5",
-      "pay": {
-        "G2": 100,
-        "P1": 100,
-        "R5": 100
-      }
-    },
-    {
-      "id": "RECIPE_D",
-      "label": "Edibles on the tourist corridor",
-      "grower": "G2",
-      "processor": "P4",
-      "retailer": "R3",
-      "pay": {
-        "G2": 100,
-        "P4": 100,
-        "R3": 100
-      }
-    },
-    {
-      "id": "RECIPE_E",
-      "label": "Highway volume blend",
-      "grower": "G3",
-      "processor": "P2",
-      "retailer": "R4",
-      "pay": {
-        "G3": 100,
-        "P2": 100,
-        "R4": 100
-      }
-    },
-    {
-      "id": "RECIPE_F",
-      "label": "Pre-roll volume run",
-      "grower": "G3",
-      "processor": "P5",
-      "retailer": "R4",
-      "pay": {
-        "G3": 100,
-        "P5": 100,
-        "R4": 100
-      }
-    },
-    {
-      "id": "RECIPE_G",
-      "label": "Rare-genetics pre-rolls",
-      "grower": "G4",
-      "processor": "P5",
-      "retailer": "R5",
-      "pay": {
-        "G4": 100,
-        "P5": 100,
-        "R5": 100
-      }
-    },
-    {
-      "id": "RECIPE_H",
-      "label": "Rare-genetics carts, loyalty program",
-      "grower": "G4",
-      "processor": "P2",
-      "retailer": "R2",
-      "pay": {
-        "G4": 100,
-        "P2": 100,
-        "R2": 100
-      }
-    },
-    {
-      "id": "RECIPE_I",
-      "label": "Greenhouse flagship line",
-      "grower": "G5",
-      "processor": "P1",
-      "retailer": "R6",
-      "pay": {
-        "G5": 100,
-        "P1": 100,
-        "R6": 100
-      }
-    },
-    {
-      "id": "RECIPE_J",
-      "label": "Organic rosin wellness",
-      "grower": "G5",
-      "processor": "P3",
-      "retailer": "R3",
-      "pay": {
-        "G5": 100,
-        "P3": 100,
-        "R3": 100
-      }
-    },
-    {
-      "id": "RECIPE_K",
-      "label": "Signature strain pre-rolls",
-      "grower": "G6",
-      "processor": "P5",
-      "retailer": "R2",
-      "pay": {
-        "G6": 100,
-        "P5": 100,
-        "R2": 100
-      }
-    },
-    {
-      "id": "RECIPE_L",
-      "label": "Greenhouse edibles",
-      "grower": "G6",
-      "processor": "P4",
-      "retailer": "R6",
-      "pay": {
-        "G6": 100,
-        "P4": 100,
-        "R6": 100
-      }
-    }
-  ],
-  "blends": [
-    {
-      "id": "BLEND_1",
-      "label": "Pine Ridge's house blend",
-      "processor": "P1",
-      "growers": [
-        "G5",
-        "G6"
-      ],
-      "pay": {
-        "P1": 120,
-        "G5": 40,
-        "G6": 40
-      }
-    },
-    {
-      "id": "BLEND_2",
-      "label": "Cedar Creek's house blend",
-      "processor": "P2",
-      "growers": [
-        "G3",
-        "G4"
-      ],
-      "pay": {
-        "P2": 120,
-        "G3": 40,
-        "G4": 40
-      }
-    },
-    {
-      "id": "BLEND_3",
-      "label": "North Coast's house blend",
-      "processor": "P3",
-      "growers": [
-        "G1",
-        "G5"
-      ],
-      "pay": {
-        "P3": 120,
-        "G1": 40,
-        "G5": 40
-      }
-    },
-    {
-      "id": "BLEND_4",
-      "label": "Timberline's house blend",
-      "processor": "P4",
-      "growers": [
-        "G2",
-        "G6"
-      ],
-      "pay": {
-        "P4": 120,
-        "G2": 40,
-        "G6": 40
-      }
-    },
-    {
-      "id": "BLEND_5",
-      "label": "Columbia Gorge's house blend",
-      "processor": "P5",
-      "growers": [
-        "G3",
-        "G4"
-      ],
-      "pay": {
-        "P5": 120,
-        "G3": 40,
-        "G4": 40
-      }
-    }
-  ],
-  "menus": [
-    {
-      "id": "MENU_1",
-      "label": "The Green Door's full menu",
-      "retailer": "R1",
-      "processors": [
-        "P1",
-        "P3"
-      ],
-      "pay": {
-        "R1": 100,
-        "P1": 40,
-        "P3": 40
-      }
-    },
-    {
-      "id": "MENU_2",
-      "label": "Canopy Corner's full menu",
-      "retailer": "R2",
-      "processors": [
-        "P5",
-        "P2"
-      ],
-      "pay": {
-        "R2": 100,
-        "P5": 40,
-        "P2": 40
-      }
-    },
-    {
-      "id": "MENU_3",
-      "label": "High Note's full menu",
-      "retailer": "R3",
-      "processors": [
-        "P4",
-        "P3"
-      ],
-      "pay": {
-        "R3": 100,
-        "P4": 40,
-        "P3": 40
-      }
-    },
-    {
-      "id": "MENU_4",
-      "label": "Trailhead's full menu",
-      "retailer": "R4",
-      "processors": [
-        "P2",
-        "P5"
-      ],
-      "pay": {
-        "R4": 100,
-        "P2": 40,
-        "P5": 40
-      }
-    },
-    {
-      "id": "MENU_5",
-      "label": "Basecamp's full menu",
-      "retailer": "R5",
-      "processors": [
-        "P1",
-        "P4"
-      ],
-      "pay": {
-        "R5": 100,
-        "P1": 40,
-        "P4": 40
-      }
-    },
-    {
-      "id": "MENU_6",
-      "label": "Firelight's full menu",
-      "retailer": "R6",
-      "processors": [
-        "P4",
-        "P1"
-      ],
-      "pay": {
-        "R6": 100,
-        "P4": 40,
-        "P1": 40
-      }
-    }
-  ],
-  "facts": [
-    {
-      "id": "F01",
-      "text": "The Green Door sells out fastest when it is stocked by Pine Ridge Processing.",
-      "combo": "RECIPE_A",
-      "holders": [
-        "G2"
-      ]
-    },
-    {
-      "id": "F02",
-      "text": "Pine Ridge Processing runs its best batches on Cascade Canopy Co's crop.",
-      "combo": "RECIPE_A",
-      "holders": [
-        "G3"
-      ]
-    },
-    {
-      "id": "F03",
-      "text": "The Green Door sells out fastest when it is stocked by North Coast Concentrates.",
-      "combo": "RECIPE_B",
-      "holders": [
-        "G4"
-      ]
-    },
-    {
-      "id": "F04",
-      "text": "North Coast Concentrates runs its best batches on Cascade Canopy Co's crop.",
-      "combo": "RECIPE_B",
-      "holders": [
-        "G5"
-      ]
-    },
-    {
-      "id": "F05",
-      "text": "Basecamp Buds sells out fastest when it is stocked by Pine Ridge Processing.",
-      "combo": "RECIPE_C",
-      "holders": [
-        "G1"
-      ]
-    },
-    {
-      "id": "F06",
-      "text": "Pine Ridge Processing runs its best batches on Blue Mountain Buds's crop.",
-      "combo": "RECIPE_C",
-      "holders": [
-        "G6"
-      ]
-    },
-    {
-      "id": "F07",
-      "text": "High Note Dispensary sells out fastest when it is stocked by Timberline Terpenes.",
-      "combo": "RECIPE_D",
-      "holders": [
-        "P1"
-      ]
-    },
-    {
-      "id": "F08",
-      "text": "Timberline Terpenes runs its best batches on Blue Mountain Buds's crop.",
-      "combo": "RECIPE_D",
-      "holders": [
-        "P2"
-      ]
-    },
-    {
-      "id": "F09",
-      "text": "Trailhead Cannabis sells out fastest when it is stocked by Cedar Creek Extracts.",
-      "combo": "RECIPE_E",
-      "holders": [
-        "P3"
-      ]
-    },
-    {
-      "id": "F10",
-      "text": "Cedar Creek Extracts runs its best batches on Willamette Grow Works's crop.",
-      "combo": "RECIPE_E",
-      "holders": [
-        "P4"
-      ]
-    },
-    {
-      "id": "F11",
-      "text": "Trailhead Cannabis sells out fastest when it is stocked by Columbia Gorge Processing.",
-      "combo": "RECIPE_F",
-      "holders": [
-        "R1"
-      ]
-    },
-    {
-      "id": "F12",
-      "text": "Columbia Gorge Processing runs its best batches on Willamette Grow Works's crop.",
-      "combo": "RECIPE_F",
-      "holders": [
-        "R2"
-      ]
-    },
-    {
-      "id": "F13",
-      "text": "Basecamp Buds sells out fastest when it is stocked by Columbia Gorge Processing.",
-      "combo": "RECIPE_G",
-      "holders": [
-        "R3"
-      ]
-    },
-    {
-      "id": "F14",
-      "text": "Columbia Gorge Processing runs its best batches on High Desert Harvest's crop.",
-      "combo": "RECIPE_G",
-      "holders": [
-        "R4"
-      ]
-    },
-    {
-      "id": "F15",
-      "text": "Canopy Corner sells out fastest when it is stocked by Cedar Creek Extracts.",
-      "combo": "RECIPE_H",
-      "holders": [
-        "P5"
-      ]
-    },
-    {
-      "id": "F16",
-      "text": "Cedar Creek Extracts runs its best batches on High Desert Harvest's crop.",
-      "combo": "RECIPE_H",
-      "holders": [
-        "R5"
-      ]
-    },
-    {
-      "id": "F17",
-      "text": "Firelight Dispensary sells out fastest when it is stocked by Pine Ridge Processing.",
-      "combo": "RECIPE_I",
-      "holders": [
-        "G1"
-      ]
-    },
-    {
-      "id": "F18",
-      "text": "Pine Ridge Processing runs its best batches on Sasquatch Seedlings's crop.",
-      "combo": "RECIPE_I",
-      "holders": [
-        "G2"
-      ]
-    },
-    {
-      "id": "F19",
-      "text": "High Note Dispensary sells out fastest when it is stocked by North Coast Concentrates.",
-      "combo": "RECIPE_J",
-      "holders": [
-        "R6"
-      ]
-    },
-    {
-      "id": "F20",
-      "text": "North Coast Concentrates runs its best batches on Sasquatch Seedlings's crop.",
-      "combo": "RECIPE_J",
-      "holders": [
-        "G3"
-      ]
-    },
-    {
-      "id": "F21",
-      "text": "Canopy Corner sells out fastest when it is stocked by Columbia Gorge Processing.",
-      "combo": "RECIPE_K",
-      "holders": [
-        "G4"
-      ]
-    },
-    {
-      "id": "F22",
-      "text": "Columbia Gorge Processing runs its best batches on Evergreen Acres's crop.",
-      "combo": "RECIPE_K",
-      "holders": [
-        "G5"
-      ]
-    },
-    {
-      "id": "F23",
-      "text": "Firelight Dispensary sells out fastest when it is stocked by Timberline Terpenes.",
-      "combo": "RECIPE_L",
-      "holders": [
-        "P1"
-      ]
-    },
-    {
-      "id": "F24",
-      "text": "Timberline Terpenes runs its best batches on Evergreen Acres's crop.",
-      "combo": "RECIPE_L",
-      "holders": [
-        "P2"
-      ]
-    },
-    {
-      "id": "F25",
-      "text": "Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's.",
-      "combo": "BLEND_1",
-      "holders": [
-        "P3"
-      ]
-    },
-    {
-      "id": "F26",
-      "text": "Pine Ridge Processing gets a bonus batch when it blends Evergreen Acres's crop with another grower's.",
-      "combo": "BLEND_1",
-      "holders": [
-        "P4"
-      ]
-    },
-    {
-      "id": "F27",
-      "text": "Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's.",
-      "combo": "BLEND_2",
-      "holders": [
-        "G6"
-      ]
-    },
-    {
-      "id": "F28",
-      "text": "Cedar Creek Extracts gets a bonus batch when it blends High Desert Harvest's crop with another grower's.",
-      "combo": "BLEND_2",
-      "holders": [
-        "P5"
-      ]
-    },
-    {
-      "id": "F29",
-      "text": "North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's.",
-      "combo": "BLEND_3",
-      "holders": [
-        "R1"
-      ]
-    },
-    {
-      "id": "F30",
-      "text": "North Coast Concentrates gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's.",
-      "combo": "BLEND_3",
-      "holders": [
-        "R2"
-      ]
-    },
-    {
-      "id": "F31",
-      "text": "Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's.",
-      "combo": "BLEND_4",
-      "holders": [
-        "R3"
-      ]
-    },
-    {
-      "id": "F32",
-      "text": "Timberline Terpenes gets a bonus batch when it blends Evergreen Acres's crop with another grower's.",
-      "combo": "BLEND_4",
-      "holders": [
-        "R4"
-      ]
-    },
-    {
-      "id": "F33",
-      "text": "Columbia Gorge Processing gets a bonus batch when it blends Willamette Grow Works's crop with another grower's.",
-      "combo": "BLEND_5",
-      "holders": [
-        "R5"
-      ]
-    },
-    {
-      "id": "F34",
-      "text": "Columbia Gorge Processing gets a bonus batch when it blends High Desert Harvest's crop with another grower's.",
-      "combo": "BLEND_5",
-      "holders": [
-        "R6"
-      ]
-    },
-    {
-      "id": "F35",
-      "text": "The Green Door's shoppers buy more when Pine Ridge Processing is on the menu with another processor.",
-      "combo": "MENU_1",
-      "holders": [
-        "G1"
-      ]
-    },
-    {
-      "id": "F36",
-      "text": "The Green Door's shoppers buy more when North Coast Concentrates is on the menu with another processor.",
-      "combo": "MENU_1",
-      "holders": [
-        "G2"
-      ]
-    },
-    {
-      "id": "F37",
-      "text": "Canopy Corner's shoppers buy more when Columbia Gorge Processing is on the menu with another processor.",
-      "combo": "MENU_2",
-      "holders": [
-        "G3"
-      ]
-    },
-    {
-      "id": "F38",
-      "text": "Canopy Corner's shoppers buy more when Cedar Creek Extracts is on the menu with another processor.",
-      "combo": "MENU_2",
-      "holders": [
-        "G4"
-      ]
-    },
-    {
-      "id": "F39",
-      "text": "High Note Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor.",
-      "combo": "MENU_3",
-      "holders": [
-        "G5"
-      ]
-    },
-    {
-      "id": "F40",
-      "text": "High Note Dispensary's shoppers buy more when North Coast Concentrates is on the menu with another processor.",
-      "combo": "MENU_3",
-      "holders": [
-        "G6"
-      ]
-    },
-    {
-      "id": "F41",
-      "text": "Trailhead Cannabis's shoppers buy more when Cedar Creek Extracts is on the menu with another processor.",
-      "combo": "MENU_4",
-      "holders": [
-        "P1"
-      ]
-    },
-    {
-      "id": "F42",
-      "text": "Trailhead Cannabis's shoppers buy more when Columbia Gorge Processing is on the menu with another processor.",
-      "combo": "MENU_4",
-      "holders": [
-        "P3"
-      ]
-    },
-    {
-      "id": "F43",
-      "text": "Basecamp Buds's shoppers buy more when Pine Ridge Processing is on the menu with another processor.",
-      "combo": "MENU_5",
-      "holders": [
-        "P2"
-      ]
-    },
-    {
-      "id": "F44",
-      "text": "Basecamp Buds's shoppers buy more when Timberline Terpenes is on the menu with another processor.",
-      "combo": "MENU_5",
-      "holders": [
-        "P5"
-      ]
-    },
-    {
-      "id": "F45",
-      "text": "Firelight Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor.",
-      "combo": "MENU_6",
-      "holders": [
-        "R1"
-      ]
-    },
-    {
-      "id": "F46",
-      "text": "Firelight Dispensary's shoppers buy more when Pine Ridge Processing is on the menu with another processor.",
-      "combo": "MENU_6",
-      "holders": [
-        "R2"
-      ]
-    }
-  ],
-  "ownFragments": {
-    "G1": {
-      "combo": "BLEND_3",
-      "text": "North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's."
-    },
-    "G2": {
-      "combo": "BLEND_4",
-      "text": "Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's."
-    },
-    "G3": {
-      "combo": "BLEND_2",
-      "text": "Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."
-    },
-    "G4": {
-      "combo": "BLEND_2",
-      "text": "Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."
-    },
-    "G5": {
-      "combo": "BLEND_1",
-      "text": "Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."
-    },
-    "G6": {
-      "combo": "BLEND_1",
-      "text": "Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."
-    },
-    "P1": {
-      "combo": "BLEND_1",
-      "text": "Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."
-    },
-    "P2": {
-      "combo": "BLEND_2",
-      "text": "Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."
-    },
-    "P3": {
-      "combo": "BLEND_3",
-      "text": "North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's."
-    },
-    "P4": {
-      "combo": "BLEND_4",
-      "text": "Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's."
-    },
-    "P5": {
-      "combo": "BLEND_5",
-      "text": "Columbia Gorge Processing gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."
-    },
-    "R1": {
-      "combo": "MENU_1",
-      "text": "The Green Door's shoppers buy more when Pine Ridge Processing is on the menu with another processor."
-    },
-    "R2": {
-      "combo": "MENU_2",
-      "text": "Canopy Corner's shoppers buy more when Columbia Gorge Processing is on the menu with another processor."
-    },
-    "R3": {
-      "combo": "MENU_3",
-      "text": "High Note Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor."
-    },
-    "R4": {
-      "combo": "MENU_4",
-      "text": "Trailhead Cannabis's shoppers buy more when Cedar Creek Extracts is on the menu with another processor."
-    },
-    "R5": {
-      "combo": "MENU_5",
-      "text": "Basecamp Buds's shoppers buy more when Pine Ridge Processing is on the menu with another processor."
-    },
-    "R6": {
-      "combo": "MENU_6",
-      "text": "Firelight Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor."
-    }
-  },
-  "const": {
-    "AI_CROP_BID_START": 400,
-    "AI_CROP_ASK": 550,
-    "AI_PRODUCT_BID": 1000,
-    "AI_PRODUCT_ASK": 1250,
-    "RETAIL_PRICE": 1550,
-    "PROCESSING_COST": 150,
-    "GROWER_CAPACITY": 2,
-    "PROCESSOR_CAPACITY": 2,
-    "RETAILER_CAPACITY": 2,
-    "STANDALONE_GROWER": 800,
-    "STANDALONE_PROCESSOR": 600,
-    "STANDALONE_RETAILER": 600,
-    "CROP_LINK_BASE": 150,
-    "PRODUCT_LINK_BASE": 250,
-    "RECIPE_BONUS_EACH": 100,
-    "BLEND_PROCESSOR_BONUS": 120,
-    "BLEND_GROWER_BONUS": 40,
-    "MENU_RETAILER_BONUS": 100,
-    "MENU_PROCESSOR_BONUS": 40,
-    "STARTING_CASH": 600,
-    "MAX_PAY": 1500,
-    "DECAY_HOLD_SECONDS": 480,
-    "DECAY_STEP_SECONDS": 180,
-    "DECAY_STEP_AMOUNT": 15,
-    "DECAY_FLOOR": 300,
-    "ROOM_GOAL_PCT": 40,
-    "ROOM_GOAL_DEFAULT": 65,
-    "SLIDERS": {
-      "crop": {
-        "price": [
-          350,
-          650,
-          25,
-          475
-        ]
-      },
-      "product": {
-        "price": [
-          950,
-          1300,
-          25,
-          1125
-        ]
-      },
-      "qty": [
-        1,
-        2
-      ],
-      "penalty": [
-        0,
-        300,
-        25,
-        0
-      ]
-    },
-    "TEMPLATES": {
-      "sell": {
-        "label": "Sell",
-        "help": "Sell your crop to a processor, or your product to a retailer, at a price you both see.",
-        "fields": {
-          "qty": [
-            1,
-            2
-          ],
-          "penalty": [
-            0,
-            300,
-            25,
-            0
-          ]
-        }
-      },
-      "chain": {
-        "label": "Chain deal",
-        "help": "Lock in a whole grower -> processor -> retailer chain in one deal, so the recipe bonus can fire.",
-        "fields": {
-          "cropPrice": [
-            350,
-            650,
-            25,
-            475
-          ],
-          "productPrice": [
-            950,
-            1300,
-            25,
-            1125
-          ],
-          "penalty": [
-            0,
-            300,
-            25,
-            0
-          ]
-        }
-      },
-      "fact": {
-        "label": "Sell a fact",
-        "help": "Sell something you know about a combo to another firm for a price, paid now.",
-        "fields": {
-          "price": [
-            0,
-            300,
-            25,
-            50
-          ]
-        }
-      },
-      "pool": {
-        "label": "Profit pool (merger)",
-        "help": "Agree to add your final gains together and split them by a fixed share. Binding: cannot be broken.",
-        "fields": {
-          "myShare": [
-            10,
-            90,
-            10,
-            50
-          ]
-        }
-      }
-    }
-  },
-  "maxTotalGain": 10900,
-  "perFirmMaxGain": {
-    "G1": 840,
-    "G2": 840,
-    "G3": 880,
-    "G4": 880,
-    "G5": 880,
-    "G6": 780,
-    "P1": 1500,
-    "P2": 1500,
-    "P3": 1500,
-    "P4": 1500,
-    "P5": 1460,
-    "R1": 1000,
-    "R2": 1000,
-    "R3": 1000,
-    "R4": 1000,
-    "R5": 900,
-    "R6": 1000
-  }
-};
+  var MARKET_DATA = {"firms":[{"id":"G1","name":"Cascade Canopy Co","tier":"grower","plain":"a fresh-frozen grower: whole plants frozen at cut, prized for rosin","art":"mj/postcard_grower_2_0.png"},{"id":"G2","name":"Blue Mountain Buds","tier":"grower","plain":"a living-soil craft grower: small batches, top-shelf buds","art":"mj/postcard_grower_3_0.png"},{"id":"G3","name":"Willamette Grow Works","tier":"grower","plain":"an outdoor grower: cheapest biomass, the most volume","art":"mj/postcard_grower_4_0.png"},{"id":"G4","name":"High Desert Harvest","tier":"grower","plain":"a rare-genetics grower: strains nobody else has","art":"mj/postcard_grower_5_0.png"},{"id":"G5","name":"Sasquatch Seedlings","tier":"grower","plain":"a certified organic grower: clean and green","art":"mj/postcard_grower_6_0.png"},{"id":"G6","name":"Evergreen Acres","tier":"grower","plain":"a year-round greenhouse grower: steady, uniform flower","art":"mj/postcard_grower_7_0.png"},{"id":"P1","name":"Pine Ridge Processing","tier":"processor","plain":"a co-packer: makes products under other companies' brands","art":"mj/postcard_processor_2_0.png"},{"id":"P2","name":"Cedar Creek Extracts","tier":"processor","plain":"a distillate and vape cartridge maker","art":"mj/postcard_processor_3_0.png"},{"id":"P3","name":"North Coast Concentrates","tier":"processor","plain":"a solventless rosin press, no chemicals used","art":"mj/postcard_processor_4_0.png"},{"id":"P4","name":"Timberline Terpenes","tier":"processor","plain":"a licensed edibles kitchen","art":"mj/postcard_processor_5_0.png"},{"id":"P5","name":"Columbia Gorge Processing","tier":"processor","plain":"an automated pre-roll line","art":"mj/postcard_processor_2_1.png"},{"id":"R1","name":"The Green Door","tier":"retailer","plain":"a downtown flagship shop: premium shelf, big spenders","art":"mj/postcard_retail_2_0.png"},{"id":"R2","name":"Canopy Corner","tier":"retailer","plain":"a shop with a loyalty program that knows what its shoppers rebuy","art":"mj/postcard_retail_3_0.png"},{"id":"R3","name":"High Note Dispensary","tier":"retailer","plain":"a wellness-focused shop","art":"mj/postcard_retail_4_0.png"},{"id":"R4","name":"Trailhead Cannabis","tier":"retailer","plain":"a highway shop on the tourist corridor: volume traffic","art":"mj/postcard_retail_5_0.png"},{"id":"R5","name":"Basecamp Buds","tier":"retailer","plain":"a delivery-only shop","art":"mj/postcard_retail_6_0.png"},{"id":"R6","name":"Firelight Dispensary","tier":"retailer","plain":"a shop with a loyal medical patient base","art":"mj/postcard_retail_7_0.png"}],"fitGP":{"G1":{"P1":100,"P2":0,"P3":200,"P4":0,"P5":0},"G2":{"P1":100,"P2":0,"P3":0,"P4":200,"P5":0},"G3":{"P1":0,"P2":200,"P3":0,"P4":0,"P5":100},"G4":{"P1":0,"P2":100,"P3":0,"P4":0,"P5":200},"G5":{"P1":200,"P2":0,"P3":100,"P4":0,"P5":0},"G6":{"P1":200,"P2":0,"P3":0,"P4":100,"P5":0}},"fitPR":{"P1":{"R1":200,"R2":0,"R3":0,"R4":0,"R5":100,"R6":0},"P2":{"R1":0,"R2":0,"R3":0,"R4":200,"R5":0,"R6":0},"P3":{"R1":0,"R2":0,"R3":200,"R4":0,"R5":200,"R6":0},"P4":{"R1":0,"R2":0,"R3":0,"R4":0,"R5":0,"R6":200},"P5":{"R1":0,"R2":200,"R3":0,"R4":0,"R5":0,"R6":0}},"recipes":[{"id":"RECIPE_A","label":"Downtown flagship line","grower":"G1","processor":"P1","retailer":"R1","pay":{"G1":100,"P1":100,"R1":100}},{"id":"RECIPE_B","label":"Live rosin wellness","grower":"G1","processor":"P3","retailer":"R1","pay":{"G1":100,"P3":100,"R1":100}},{"id":"RECIPE_C","label":"Craft carts, loyalty program","grower":"G2","processor":"P1","retailer":"R5","pay":{"G2":100,"P1":100,"R5":100}},{"id":"RECIPE_D","label":"Edibles on the tourist corridor","grower":"G2","processor":"P4","retailer":"R3","pay":{"G2":100,"P4":100,"R3":100}},{"id":"RECIPE_E","label":"Highway volume blend","grower":"G3","processor":"P2","retailer":"R4","pay":{"G3":100,"P2":100,"R4":100}},{"id":"RECIPE_F","label":"Pre-roll volume run","grower":"G3","processor":"P5","retailer":"R4","pay":{"G3":100,"P5":100,"R4":100}},{"id":"RECIPE_G","label":"Rare-genetics pre-rolls","grower":"G4","processor":"P5","retailer":"R5","pay":{"G4":100,"P5":100,"R5":100}},{"id":"RECIPE_H","label":"Rare-genetics carts, loyalty program","grower":"G4","processor":"P2","retailer":"R2","pay":{"G4":100,"P2":100,"R2":100}},{"id":"RECIPE_I","label":"Greenhouse flagship line","grower":"G5","processor":"P1","retailer":"R6","pay":{"G5":100,"P1":100,"R6":100}},{"id":"RECIPE_J","label":"Organic rosin wellness","grower":"G5","processor":"P3","retailer":"R3","pay":{"G5":100,"P3":100,"R3":100}},{"id":"RECIPE_K","label":"Signature strain pre-rolls","grower":"G6","processor":"P5","retailer":"R2","pay":{"G6":100,"P5":100,"R2":100}},{"id":"RECIPE_L","label":"Greenhouse edibles","grower":"G6","processor":"P4","retailer":"R6","pay":{"G6":100,"P4":100,"R6":100}}],"blends":[{"id":"BLEND_1","label":"Pine Ridge's house blend","processor":"P1","growers":["G5","G6"],"pay":{"P1":120,"G5":40,"G6":40}},{"id":"BLEND_2","label":"Cedar Creek's house blend","processor":"P2","growers":["G3","G4"],"pay":{"P2":120,"G3":40,"G4":40}},{"id":"BLEND_3","label":"North Coast's house blend","processor":"P3","growers":["G1","G5"],"pay":{"P3":120,"G1":40,"G5":40}},{"id":"BLEND_4","label":"Timberline's house blend","processor":"P4","growers":["G2","G6"],"pay":{"P4":120,"G2":40,"G6":40}},{"id":"BLEND_5","label":"Columbia Gorge's house blend","processor":"P5","growers":["G3","G4"],"pay":{"P5":120,"G3":40,"G4":40}}],"menus":[{"id":"MENU_1","label":"The Green Door's full menu","retailer":"R1","processors":["P1","P3"],"pay":{"R1":100,"P1":40,"P3":40}},{"id":"MENU_2","label":"Canopy Corner's full menu","retailer":"R2","processors":["P5","P2"],"pay":{"R2":100,"P5":40,"P2":40}},{"id":"MENU_3","label":"High Note's full menu","retailer":"R3","processors":["P4","P3"],"pay":{"R3":100,"P4":40,"P3":40}},{"id":"MENU_4","label":"Trailhead's full menu","retailer":"R4","processors":["P2","P5"],"pay":{"R4":100,"P2":40,"P5":40}},{"id":"MENU_5","label":"Basecamp's full menu","retailer":"R5","processors":["P1","P4"],"pay":{"R5":100,"P1":40,"P4":40}},{"id":"MENU_6","label":"Firelight's full menu","retailer":"R6","processors":["P4","P1"],"pay":{"R6":100,"P4":40,"P1":40}}],"facts":[{"id":"F01","text":"The Green Door sells out fastest when it is stocked by Pine Ridge Processing.","combo":"RECIPE_A","holders":["G2"]},{"id":"F02","text":"Pine Ridge Processing runs its best batches on Cascade Canopy Co's crop.","combo":"RECIPE_A","holders":["G3"]},{"id":"F03","text":"The Green Door sells out fastest when it is stocked by North Coast Concentrates.","combo":"RECIPE_B","holders":["G4"]},{"id":"F04","text":"North Coast Concentrates runs its best batches on Cascade Canopy Co's crop.","combo":"RECIPE_B","holders":["G5"]},{"id":"F05","text":"Basecamp Buds sells out fastest when it is stocked by Pine Ridge Processing.","combo":"RECIPE_C","holders":["G1"]},{"id":"F06","text":"Pine Ridge Processing runs its best batches on Blue Mountain Buds's crop.","combo":"RECIPE_C","holders":["G6"]},{"id":"F07","text":"High Note Dispensary sells out fastest when it is stocked by Timberline Terpenes.","combo":"RECIPE_D","holders":["P1"]},{"id":"F08","text":"Timberline Terpenes runs its best batches on Blue Mountain Buds's crop.","combo":"RECIPE_D","holders":["P2"]},{"id":"F09","text":"Trailhead Cannabis sells out fastest when it is stocked by Cedar Creek Extracts.","combo":"RECIPE_E","holders":["P3"]},{"id":"F10","text":"Cedar Creek Extracts runs its best batches on Willamette Grow Works's crop.","combo":"RECIPE_E","holders":["P4"]},{"id":"F11","text":"Trailhead Cannabis sells out fastest when it is stocked by Columbia Gorge Processing.","combo":"RECIPE_F","holders":["R1"]},{"id":"F12","text":"Columbia Gorge Processing runs its best batches on Willamette Grow Works's crop.","combo":"RECIPE_F","holders":["R2"]},{"id":"F13","text":"Basecamp Buds sells out fastest when it is stocked by Columbia Gorge Processing.","combo":"RECIPE_G","holders":["R3"]},{"id":"F14","text":"Columbia Gorge Processing runs its best batches on High Desert Harvest's crop.","combo":"RECIPE_G","holders":["R4"]},{"id":"F15","text":"Canopy Corner sells out fastest when it is stocked by Cedar Creek Extracts.","combo":"RECIPE_H","holders":["P5"]},{"id":"F16","text":"Cedar Creek Extracts runs its best batches on High Desert Harvest's crop.","combo":"RECIPE_H","holders":["R5"]},{"id":"F17","text":"Firelight Dispensary sells out fastest when it is stocked by Pine Ridge Processing.","combo":"RECIPE_I","holders":["G1"]},{"id":"F18","text":"Pine Ridge Processing runs its best batches on Sasquatch Seedlings's crop.","combo":"RECIPE_I","holders":["G2"]},{"id":"F19","text":"High Note Dispensary sells out fastest when it is stocked by North Coast Concentrates.","combo":"RECIPE_J","holders":["R6"]},{"id":"F20","text":"North Coast Concentrates runs its best batches on Sasquatch Seedlings's crop.","combo":"RECIPE_J","holders":["G3"]},{"id":"F21","text":"Canopy Corner sells out fastest when it is stocked by Columbia Gorge Processing.","combo":"RECIPE_K","holders":["G4"]},{"id":"F22","text":"Columbia Gorge Processing runs its best batches on Evergreen Acres's crop.","combo":"RECIPE_K","holders":["G5"]},{"id":"F23","text":"Firelight Dispensary sells out fastest when it is stocked by Timberline Terpenes.","combo":"RECIPE_L","holders":["P1"]},{"id":"F24","text":"Timberline Terpenes runs its best batches on Evergreen Acres's crop.","combo":"RECIPE_L","holders":["P2"]},{"id":"F25","text":"Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's.","combo":"BLEND_1","holders":["P3"]},{"id":"F26","text":"Pine Ridge Processing gets a bonus batch when it blends Evergreen Acres's crop with another grower's.","combo":"BLEND_1","holders":["P4"]},{"id":"F27","text":"Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's.","combo":"BLEND_2","holders":["G6"]},{"id":"F28","text":"Cedar Creek Extracts gets a bonus batch when it blends High Desert Harvest's crop with another grower's.","combo":"BLEND_2","holders":["P5"]},{"id":"F29","text":"North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's.","combo":"BLEND_3","holders":["R1"]},{"id":"F30","text":"North Coast Concentrates gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's.","combo":"BLEND_3","holders":["R2"]},{"id":"F31","text":"Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's.","combo":"BLEND_4","holders":["R3"]},{"id":"F32","text":"Timberline Terpenes gets a bonus batch when it blends Evergreen Acres's crop with another grower's.","combo":"BLEND_4","holders":["R4"]},{"id":"F33","text":"Columbia Gorge Processing gets a bonus batch when it blends Willamette Grow Works's crop with another grower's.","combo":"BLEND_5","holders":["R5"]},{"id":"F34","text":"Columbia Gorge Processing gets a bonus batch when it blends High Desert Harvest's crop with another grower's.","combo":"BLEND_5","holders":["R6"]},{"id":"F35","text":"The Green Door's shoppers buy more when Pine Ridge Processing is on the menu with another processor.","combo":"MENU_1","holders":["G1"]},{"id":"F36","text":"The Green Door's shoppers buy more when North Coast Concentrates is on the menu with another processor.","combo":"MENU_1","holders":["G2"]},{"id":"F37","text":"Canopy Corner's shoppers buy more when Columbia Gorge Processing is on the menu with another processor.","combo":"MENU_2","holders":["G3"]},{"id":"F38","text":"Canopy Corner's shoppers buy more when Cedar Creek Extracts is on the menu with another processor.","combo":"MENU_2","holders":["G4"]},{"id":"F39","text":"High Note Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor.","combo":"MENU_3","holders":["G5"]},{"id":"F40","text":"High Note Dispensary's shoppers buy more when North Coast Concentrates is on the menu with another processor.","combo":"MENU_3","holders":["G6"]},{"id":"F41","text":"Trailhead Cannabis's shoppers buy more when Cedar Creek Extracts is on the menu with another processor.","combo":"MENU_4","holders":["P1"]},{"id":"F42","text":"Trailhead Cannabis's shoppers buy more when Columbia Gorge Processing is on the menu with another processor.","combo":"MENU_4","holders":["P3"]},{"id":"F43","text":"Basecamp Buds's shoppers buy more when Pine Ridge Processing is on the menu with another processor.","combo":"MENU_5","holders":["P2"]},{"id":"F44","text":"Basecamp Buds's shoppers buy more when Timberline Terpenes is on the menu with another processor.","combo":"MENU_5","holders":["P5"]},{"id":"F45","text":"Firelight Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor.","combo":"MENU_6","holders":["R1"]},{"id":"F46","text":"Firelight Dispensary's shoppers buy more when Pine Ridge Processing is on the menu with another processor.","combo":"MENU_6","holders":["R2"]}],"ownFragments":{"G1":{"combo":"BLEND_3","text":"North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's."},"G2":{"combo":"BLEND_4","text":"Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's."},"G3":{"combo":"BLEND_2","text":"Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."},"G4":{"combo":"BLEND_2","text":"Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."},"G5":{"combo":"BLEND_1","text":"Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."},"G6":{"combo":"BLEND_1","text":"Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."},"P1":{"combo":"BLEND_1","text":"Pine Ridge Processing gets a bonus batch when it blends Sasquatch Seedlings's crop with another grower's."},"P2":{"combo":"BLEND_2","text":"Cedar Creek Extracts gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."},"P3":{"combo":"BLEND_3","text":"North Coast Concentrates gets a bonus batch when it blends Cascade Canopy Co's crop with another grower's."},"P4":{"combo":"BLEND_4","text":"Timberline Terpenes gets a bonus batch when it blends Blue Mountain Buds's crop with another grower's."},"P5":{"combo":"BLEND_5","text":"Columbia Gorge Processing gets a bonus batch when it blends Willamette Grow Works's crop with another grower's."},"R1":{"combo":"MENU_1","text":"The Green Door's shoppers buy more when Pine Ridge Processing is on the menu with another processor."},"R2":{"combo":"MENU_2","text":"Canopy Corner's shoppers buy more when Columbia Gorge Processing is on the menu with another processor."},"R3":{"combo":"MENU_3","text":"High Note Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor."},"R4":{"combo":"MENU_4","text":"Trailhead Cannabis's shoppers buy more when Cedar Creek Extracts is on the menu with another processor."},"R5":{"combo":"MENU_5","text":"Basecamp Buds's shoppers buy more when Pine Ridge Processing is on the menu with another processor."},"R6":{"combo":"MENU_6","text":"Firelight Dispensary's shoppers buy more when Timberline Terpenes is on the menu with another processor."}},"const":{"AI_CROP_BID_START":400,"AI_CROP_ASK":550,"AI_PRODUCT_BID":1000,"AI_PRODUCT_ASK":1250,"RETAIL_PRICE":1550,"PROCESSING_COST":150,"GROWER_CAPACITY":2,"PROCESSOR_CAPACITY":2,"RETAILER_CAPACITY":2,"STANDALONE_GROWER":800,"STANDALONE_PROCESSOR":600,"STANDALONE_RETAILER":600,"CROP_LINK_BASE":150,"PRODUCT_LINK_BASE":250,"RECIPE_BONUS_EACH":100,"BLEND_PROCESSOR_BONUS":120,"BLEND_GROWER_BONUS":40,"MENU_RETAILER_BONUS":100,"MENU_PROCESSOR_BONUS":40,"STARTING_CASH":600,"MAX_PAY":1500,"DECAY_HOLD_SECONDS":480,"DECAY_STEP_SECONDS":180,"DECAY_STEP_AMOUNT":15,"DECAY_FLOOR":300,"ROOM_GOAL_PCT":40,"ROOM_GOAL_DEFAULT":65,"SLIDERS":{"crop":{"price":[350,650,25,475]},"product":{"price":[950,1300,25,1125]},"qty":[1,2],"penalty":[0,300,25,0]},"TEMPLATES":{"sell":{"label":"Sell","help":"Sell your crop to a processor, or your product to a retailer, at a price you both see.","fields":{"qty":[1,2],"penalty":[0,300,25,0]}},"chain":{"label":"Chain deal","help":"Lock in a whole grower -> processor -> retailer chain in one deal, so the recipe bonus can fire.","fields":{"cropPrice":[350,650,25,475],"productPrice":[950,1300,25,1125],"penalty":[0,300,25,0]}},"fact":{"label":"Sell a fact","help":"Sell something you know about a combo to another firm for a price, paid now.","fields":{"price":[0,300,25,50]}},"pool":{"label":"Profit pool (merger)","help":"Agree to add your final gains together and split them by a fixed share. Binding: cannot be broken.","fields":{"myShare":[10,90,10,50]}}},"PENALTY_DEFAULT_FRACTION":0.2,"OVERCAPACITY_HARD_BLOCK":false},"maxTotalGain":10900,"perFirmMaxGain":{"G1":840,"G2":840,"G3":880,"G4":880,"G5":880,"G6":780,"P1":1500,"P2":1500,"P3":1500,"P4":1500,"P5":1460,"R1":1000,"R2":1000,"R3":1000,"R4":1000,"R5":900,"R6":1000}};
 
   function loadMarket() {
     if (MARKET_DATA) return MARKET_DATA;
@@ -1134,6 +39,16 @@
   var RECIPES_BY_GPR = {}; // "g|p|r" -> recipe
   MARKET.recipes.forEach(function (r) { RECIPES_BY_GPR[r.grower + '|' + r.processor + '|' + r.retailer] = r; });
 
+  // COMBO_BY_ID: every recipe/blend/menu, keyed by its id (facts' `combo`
+  // field matches one of these ids directly), with its member firm ids
+  // flattened to one list -- used for fact-context sentences (fix 5,
+  // 2026-10-06: "wherever a player sees a fact, show the combo it belongs to,
+  // the three member firms").
+  var COMBO_BY_ID = {};
+  MARKET.recipes.forEach(function (c) { COMBO_BY_ID[c.id] = { id: c.id, label: c.label, members: [c.grower, c.processor, c.retailer] }; });
+  MARKET.blends.forEach(function (c) { COMBO_BY_ID[c.id] = { id: c.id, label: c.label, members: [c.processor].concat(c.growers) }; });
+  MARKET.menus.forEach(function (c) { COMBO_BY_ID[c.id] = { id: c.id, label: c.label, members: [c.retailer].concat(c.processors) }; });
+
   function firmTier(id) {
     var f = FIRM_BY_ID[id];
     return f ? f.tier : null;
@@ -1157,6 +72,25 @@
     if (n >= 200) return 'a lot';
     if (n >= 100) return 'some';
     return null;
+  }
+
+  // Plain-words combo context for a fact (fix 5): the combo's label, its
+  // member firms by name, and the "one of two clues" line, never the holder
+  // of the other fragment. Used in cardFor's facts list, the fact-sale
+  // summary, and clauseSummary's share_fact branch, so a player sees the
+  // same context everywhere a fact shows up.
+  function comboInfoFor(comboId) {
+    var c = COMBO_BY_ID[comboId];
+    if (!c) return null;
+    return { id: c.id, label: c.label, members: c.members.map(function (m) { return { id: m, name: nameOf(m) }; }) };
+  }
+  function factContextSentence(factId) {
+    var f = FACT_BY_ID[factId];
+    if (!f) return '';
+    var combo = comboInfoFor(f.combo);
+    if (!combo) return '';
+    var names = combo.members.map(function (m) { return m.name; }).join(', ');
+    return 'This is about ' + combo.label + ' (' + names + '). This is one of two clues to this combo; another firm holds the other one.';
   }
 
   // ------------------------------------------------------------------
@@ -1186,7 +120,7 @@
     (extraFactIds || []).forEach(function (id) { factIds[id] = true; });
     var facts = Object.keys(factIds).map(function (id) {
       var f = FACT_BY_ID[id];
-      return { id: f.id, text: f.text };
+      return { id: f.id, text: f.text, combo: comboInfoFor(f.combo) };
     });
 
     var fallback = [];
@@ -1346,6 +280,14 @@
           if (held.indexOf(c.fact) === -1) {
             errors.push(tag + sfrom + ' does not hold fact ' + c.fact + ' and cannot share it.');
           }
+          // No double-selling (fix 4, 2026-10-06): reject a share_fact whose
+          // receiver already holds the fact, whether originally or via an
+          // earlier confirmed share_fact deal (ctx.factsHeld is expected to
+          // already include both -- see currentFactHolders/readerContext).
+          var receiverHeld = factsHeld[sto] || [];
+          if (receiverHeld.indexOf(c.fact) !== -1) {
+            errors.push(tag + sto + ' already knows fact ' + c.fact + '; it cannot be sold to them again.');
+          }
         }
       }
 
@@ -1464,6 +406,52 @@
       });
     });
     return out;
+  }
+
+  // capacityStatus (fix 1/2, 2026-10-06): units committed by a firm right
+  // now, counted the SAME way resolve() counts them (bo8_engine.js growers
+  // ~413-453, processors ~582-593, retailers ~658-672), so the live "X LEFT
+  // OF Y" counter and the final break never disagree:
+  //  - grower: qty on confirmed crop-deliver clauses it sends, plus every
+  //    locked AI crop sale (state.aiCropLocks).
+  //  - processor: qty on confirmed product-deliver clauses it sends (each
+  //    one needs a processing slot, whether the crop behind it is its own
+  //    or bought from the AI at resolve).
+  //  - retailer: qty on confirmed product-deliver clauses it receives.
+  // `extraClauses` (optional) are deliver clauses NOT YET confirmed -- the
+  // deal a player is about to sign/confirm -- added on top of the confirmed
+  // total so a caller can ask "would this push me over?" before it's
+  // binding (ROUND2-CONTRACT.md fix 2).
+  function capacityStatus(state, firmId, extraClauses) {
+    var fid = normId(firmId);
+    var tier = firmTier(fid);
+    var cap = tier === 'grower' ? CONST.GROWER_CAPACITY
+      : tier === 'processor' ? CONST.PROCESSOR_CAPACITY
+      : tier === 'retailer' ? CONST.RETAILER_CAPACITY : 0;
+    function relevant(c) {
+      if (!c || c.type !== 'deliver') return false;
+      if (tier === 'grower') return c.good === 'crop' && normId(c.from) === fid;
+      if (tier === 'processor') return c.good === 'product' && normId(c.from) === fid;
+      if (tier === 'retailer') return c.good === 'product' && normId(c.to) === fid;
+      return false;
+    }
+    var flat = flattenClauses(state && state.deals);
+    var dealsUsing = flat.filter(function (x) { return relevant(x.clause); }).map(function (x) {
+      var c = x.clause;
+      var partner = tier === 'retailer' ? normId(c.from) : normId(c.to);
+      return { dealId: x.deal.id, clauseId: c.id, partner: partner, qty: c.qty || 1 };
+    });
+    var committed = dealsUsing.reduce(function (s, d) { return s + d.qty; }, 0);
+    var aiLocked = tier === 'grower' ? (((state && state.aiCropLocks && state.aiCropLocks[fid]) || []).length) : 0;
+    committed += aiLocked;
+    var pendingQty = 0;
+    (extraClauses || []).forEach(function (c) { if (relevant(c)) pendingQty += (c.qty || 1); });
+    var total = committed + pendingQty;
+    return {
+      tier: tier, cap: cap, committed: committed, aiLocked: aiLocked,
+      pendingQty: pendingQty, total: total, overBy: Math.max(0, total - cap),
+      dealsUsing: dealsUsing
+    };
   }
 
   function isUnplayed(state, firmId) {
@@ -1923,12 +911,12 @@
       firms[b].gain = newB;
       firms[a].ledger.push({
         label: nameOf(a) + ' pools profits with ' + nameOf(b) + ': combined gain ' + fmtMoney(combined)
-          + ' split ' + shareA + '/' + shareB + ', your share ' + fmtMoney(newA),
+          + '. ' + nameOf(a) + ' keeps ' + shareA + '% (' + fmtMoney(newA) + '); ' + nameOf(b) + ' keeps ' + shareB + '% (' + fmtMoney(newB) + ').',
         amount: newA - oldA, kind: 'pool'
       });
       firms[b].ledger.push({
         label: nameOf(b) + ' pools profits with ' + nameOf(a) + ': combined gain ' + fmtMoney(combined)
-          + ' split ' + shareB + '/' + shareA + ', your share ' + fmtMoney(newB),
+          + '. ' + nameOf(b) + ' keeps ' + shareB + '% (' + fmtMoney(newB) + '); ' + nameOf(a) + ' keeps ' + shareA + '% (' + fmtMoney(newA) + ').',
         amount: newB - oldB, kind: 'pool'
       });
     });
@@ -2013,6 +1001,12 @@
     }
     if (c.type === 'deliver' && c.good === 'product') {
       return nameOf(c.from) + ' delivers product to ' + nameOf(c.to) + ' for ' + fmtMoney(c.price) + '.';
+    }
+    if (c.type === 'share_fact') {
+      var f = FACT_BY_ID[c.fact];
+      var text = f ? ('"' + f.text + '"') : ('fact ' + c.fact);
+      var context = factContextSentence(c.fact);
+      return nameOf(c.from) + ' shares a fact with ' + nameOf(c.to) + ': ' + text + (context ? ' ' + context : '');
     }
     return c.type + ' clause';
   }
@@ -2210,12 +1204,16 @@
         + ', which ' + nameOf(s2.from) + ' turns into product for ' + nameOf(s2.to) + ' for ' + fmtMoney(s2.price) + '.';
     } else if (tmpl.type === 'fact') {
       var share = clauses[0], pay = clauses[1];
-      summary = nameOf(share.from) + ' shares a fact with ' + nameOf(share.to) + ' for ' + fmtMoney(pay.amount) + '.';
+      var shareFactObj = FACT_BY_ID[share.fact];
+      var shareText = shareFactObj ? ('"' + shareFactObj.text + '"') : ('fact ' + share.fact);
+      var shareContext = factContextSentence(share.fact);
+      summary = nameOf(share.from) + ' shares a fact with ' + nameOf(share.to) + ' for ' + fmtMoney(pay.amount) + ': ' + shareText + '.'
+        + (shareContext ? ' ' + shareContext : '');
     } else if (tmpl.type === 'pool') {
       var pool = clauses[0];
       var ids = pool.firms;
-      summary = nameOf(ids[0]) + ' and ' + nameOf(ids[1]) + ' pool their final profits and split them '
-        + pool.split[ids[0]] + '/' + pool.split[ids[1]] + '. This is binding and cannot be broken.';
+      summary = nameOf(ids[0]) + ' keeps ' + pool.split[ids[0]] + '% of the combined profit; '
+        + nameOf(ids[1]) + ' keeps ' + pool.split[ids[1]] + '%. This is binding and cannot be broken.';
     } else {
       summary = '';
     }
@@ -2251,6 +1249,51 @@
     return merged;
   }
 
+  // reassignStrandedFacts (fix 7, 2026-10-06): a fact whose every original
+  // holder is AI-covered (nobody claimed those seats) can never be sold --
+  // SUAXJ had this for R2 Canopy Corner and R6 Firelight. Deterministically
+  // (given `seed`) reassigns each such fact to a claimed firm that is not a
+  // member of the fact's own combo and does not already hold the combo's
+  // OTHER fragment, spreading them evenly across eligible firms. Returns
+  // {firmId: [factId, ...]} for the caller to store as state.factReassign /
+  // world.factReassign; never mutates MARKET.
+  function reassignStrandedFacts(aiCovered, seed) {
+    var rng = mulberry32(typeof seed === 'number' ? seed : 1);
+    var coveredSet = {};
+    (aiCovered || []).forEach(function (id) { coveredSet[normId(id)] = true; });
+    var claimed = MARKET.firms.map(function (f) { return f.id; }).filter(function (id) { return !coveredSet[id]; });
+    var assignedCount = {};
+    claimed.forEach(function (id) { assignedCount[id] = 0; });
+    // comboHolders: which CLAIMED firms already hold a fragment of each combo
+    // (so a reassignment never gives one claimed firm both fragments).
+    var comboHolders = {};
+    MARKET.facts.forEach(function (f) {
+      f.holders.forEach(function (h) {
+        var hid = normId(h);
+        if (!coveredSet[hid]) (comboHolders[f.combo] = comboHolders[f.combo] || {})[hid] = true;
+      });
+    });
+    var stranded = MARKET.facts.filter(function (f) {
+      return f.holders.length > 0 && f.holders.every(function (h) { return coveredSet[normId(h)]; });
+    }).slice().sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }); // deterministic order
+    var out = {};
+    stranded.forEach(function (f) {
+      var combo = COMBO_BY_ID[f.combo];
+      var members = ((combo && combo.members) || []).map(normId);
+      var already = comboHolders[f.combo] || {};
+      var candidates = claimed.filter(function (id) { return members.indexOf(id) === -1 && !already[id]; });
+      if (!candidates.length) candidates = claimed.filter(function (id) { return members.indexOf(id) === -1; });
+      if (!candidates.length) return; // no eligible claimed firm at all; leave stranded
+      var minCount = Math.min.apply(null, candidates.map(function (id) { return assignedCount[id]; }));
+      var tied = candidates.filter(function (id) { return assignedCount[id] === minCount; });
+      var pick = tied[Math.floor(rng() * tied.length)];
+      assignedCount[pick] = (assignedCount[pick] || 0) + 1;
+      (comboHolders[f.combo] = comboHolders[f.combo] || {})[pick] = true;
+      (out[pick] = out[pick] || []).push(f.id);
+    });
+    return out;
+  }
+
   // routesFor: combos that pay this firm (used by tests and the build report)
   function routesFor(firmId) {
     var fid = normId(firmId);
@@ -2259,6 +1302,114 @@
     MARKET.blends.forEach(function (bl) { if (bl.pay && bl.pay[fid] != null) out.push(bl.id); });
     MARKET.menus.forEach(function (mn) { if (mn.pay && mn.pay[fid] != null) out.push(mn.id); });
     return out;
+  }
+
+  // firmsInConfirmedPools (fix 2, 2026-10-06): firm ids already in a
+  // CONFIRMED profit-pool clause, in state.deals order (callers -- the
+  // student composer/confirm flow, the reader -- must pass deals sorted by
+  // created_at ascending, same as fetchDeals/select_confirmed_deals, so
+  // "first pool wins" is deterministic by confirmation/creation time).
+  // Pass the result as ctx.firmsInPool to validateReading to actually block
+  // a second pool at compose/confirm time (previously nothing called it).
+  function firmsInConfirmedPools(state) {
+    var flat = flattenClauses(state && state.deals).filter(function (x) { return x.clause.type === 'pool'; });
+    var out = [];
+    var seen = {};
+    flat.forEach(function (x) {
+      (x.clause.firms || []).map(normId).forEach(function (fid) {
+        if (!seen[fid]) { seen[fid] = true; out.push(fid); }
+      });
+    });
+    return out;
+  }
+
+  // comboProgress (fix 4, 2026-10-06): for a firm, every combo it belongs to
+  // (same set as routesFor) with each required link and whether a CONFIRMED
+  // deliver clause covers it right now ("signed" -- a confirmed clause can
+  // still be broken at orders, but this is the plain student-facing word for
+  // "there is a signed deal for this"). Uses the SAME structural definition
+  // of a combo's links that resolve()'s combo step (step 5 above) checks
+  // against actual deliveries, so the panel never disagrees with scoring.
+  function comboLinksFor(combo, type) {
+    if (type === 'recipe') {
+      return [
+        { from: combo.grower, to: combo.processor, good: 'crop' },
+        { from: combo.processor, to: combo.retailer, good: 'product', source: combo.grower }
+      ];
+    }
+    if (type === 'blend') {
+      return combo.growers.map(function (g) { return { from: g, to: combo.processor, good: 'crop' }; });
+    }
+    if (type === 'menu') {
+      return combo.processors.map(function (p) { return { from: p, to: combo.retailer, good: 'product' }; });
+    }
+    return [];
+  }
+
+  function comboByIdAnyType(id) {
+    var r = MARKET.recipes.filter(function (c) { return c.id === id; })[0];
+    if (r) return { combo: r, type: 'recipe' };
+    var bl = MARKET.blends.filter(function (c) { return c.id === id; })[0];
+    if (bl) return { combo: bl, type: 'blend' };
+    var mn = MARKET.menus.filter(function (c) { return c.id === id; })[0];
+    if (mn) return { combo: mn, type: 'menu' };
+    return null;
+  }
+
+  function comboProgress(state, firmId) {
+    var fid = normId(firmId);
+    var flat = flattenClauses(state && state.deals).filter(function (x) { return x.clause.type === 'deliver'; });
+    function isSigned(link) {
+      return flat.some(function (x) {
+        var c = x.clause;
+        if (normId(c.from) !== normId(link.from) || normId(c.to) !== normId(link.to) || c.good !== link.good) return false;
+        if (link.source && c.source) return normId(c.source) === normId(link.source);
+        return true; // no source named on one side or the other -- "any product counts"
+      });
+    }
+    return routesFor(fid).map(function (comboId) {
+      var found = comboByIdAnyType(comboId);
+      if (!found) return null;
+      var combo = found.combo, type = found.type;
+      var links = comboLinksFor(combo, type).map(function (l) {
+        return { from: l.from, fromName: nameOf(l.from), to: l.to, toName: nameOf(l.to), good: l.good, signed: isSigned(l) };
+      });
+      var linksSigned = links.filter(function (l) { return l.signed; }).length;
+      return {
+        id: combo.id, type: type, label: combo.label, myAmount: (combo.pay || {})[fid],
+        members: Object.keys(combo.pay || {}).map(function (m) { return { id: m, name: nameOf(m) }; }),
+        links: links, linksSigned: linksSigned, linksTotal: links.length
+      };
+    }).filter(Boolean);
+  }
+
+  // currentFactHolders: who holds each fact RIGHT NOW, merging the market's
+  // static holders with (a) stranded-fact reassignment (fix 7, state.
+  // factReassign: {firmId:[factId,...]}) and (b) every CONFIRMED share_fact
+  // clause's receiver (a sold/given fact is held by the buyer from then on;
+  // the giver keeps it too -- "once you say it out loud, it is free"). Used
+  // by readerContext (below) so the reader's factsHeld -- and so
+  // validateReading's no-double-selling check -- sees the real, current
+  // picture, not just market.json's original deal.
+  function currentFactHolders(state) {
+    var holders = {}; // factId -> {firmId: true}
+    MARKET.facts.forEach(function (f) {
+      holders[f.id] = {};
+      f.holders.forEach(function (h) { holders[f.id][normId(h)] = true; });
+    });
+    var reassign = (state && state.factReassign) || {};
+    Object.keys(reassign).forEach(function (fid) {
+      (reassign[fid] || []).forEach(function (factId) {
+        if (holders[factId]) holders[factId][normId(fid)] = true;
+      });
+    });
+    ((state && state.deals) || []).forEach(function (deal) {
+      if (deal.status !== 'confirmed') return;
+      ((deal.reading && deal.reading.clauses) || []).forEach(function (c) {
+        if (c && c.type === 'share_fact' && holders[c.fact]) holders[c.fact][normId(c.to)] = true;
+      });
+    });
+    return holders;
   }
 
   // ------------------------------------------------------------------
@@ -2271,10 +1422,11 @@
       var cap = f.tier === 'grower' ? CONST.GROWER_CAPACITY : (f.tier === 'processor' ? CONST.PROCESSOR_CAPACITY : CONST.RETAILER_CAPACITY);
       return { id: f.id, name: f.name, tier: f.tier, plain: f.plain, capacity: cap };
     });
+    var holders = currentFactHolders(state);
     var factsHeld = {};
     parties.forEach(function (id) {
-      factsHeld[id] = MARKET.facts.filter(function (f) { return f.holders.indexOf(id) !== -1; })
-        .map(function (f) { return { id: f.id, text: f.text }; });
+      factsHeld[id] = Object.keys(holders).filter(function (factId) { return holders[factId][id]; })
+        .map(function (factId) { var f = FACT_BY_ID[factId]; return { id: f.id, text: f.text }; });
     });
     var confirmed = [];
     (state && state.deals || []).forEach(function (deal) {
@@ -2397,6 +1549,12 @@
     checkSliderIntact: checkSliderIntact,
     mergeExtras: mergeExtras,
     routesFor: routesFor,
+    firmsInConfirmedPools: firmsInConfirmedPools,
+    comboProgress: comboProgress,
+    capacityStatus: capacityStatus,
+    reassignStrandedFacts: reassignStrandedFacts,
+    comboInfoFor: comboInfoFor,
+    factContextSentence: factContextSentence,
     bots: { randomReading: randomReading },
     _normId: normId
   };

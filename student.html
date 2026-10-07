@@ -9,7 +9,7 @@
 <title>Better Off: Open Deals | Student</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%231f6f5c%27/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261005a">
+<link rel="stylesheet" href="css/style.css?v=20261006b">
 <style>
   .firm-head { display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap; justify-content:space-between; }
   .firm-head .who { display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap; }
@@ -83,6 +83,7 @@
             <div id="sliderBox"></div>
             <label for="extrasText">Changes or extras (optional)<span class="q" tabindex="0" data-tip="Anything beyond the generic deal: a side payment, a condition on another deal (&quot;only if...&quot;), sharing a fact, or a promise that isn't enforced.">?</span></label>
             <textarea id="extrasText" rows="3" placeholder="e.g. a side payment of $20k, &quot;only if Pine Ridge's product goes to Canopy Corner&quot;, sharing a fact, or a promise not to sell elsewhere."></textarea>
+            <p class="muted" style="font-size:0.78rem; margin:0.2rem 0 0;">Examples: "Only if Pine Ridge delivers to us" (a condition), "We promise to buy your second crop too" (a promise, not enforced), "share a fact with them", or a side payment.</p>
             <button id="sendDealBtn" class="send" style="margin-top:0.6rem; width:100%;">Send</button>
           </div>
         </div>
@@ -122,10 +123,10 @@
 <div id="msgBanner" class="hidden" style="position:fixed; top:0; left:0; right:0; z-index:1000; padding:0.6rem 1rem; font-weight:700;"></div>
 <div class="toast" id="toast"></div>
 
-<script src="config.js?v=20261005a"></script>
+<script src="config.js?v=20261006b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core8.js?v=20261005a"></script>
-<script src="engine/bo8_engine.bundle.js?v=20261005a"></script>
+<script src="js/core8.js?v=20261006b"></script>
+<script src="engine/bo8_engine.bundle.js?v=20261006b"></script>
 <script>
 (function () {
   'use strict';
@@ -355,7 +356,9 @@
       return e.cardFor(firmId, extra);
     } catch (err) { console.warn('cardFor failed', err); return null; }
   }
-  // facts gained via a confirmed deal's share_fact clause targeting me
+  // facts gained via a confirmed deal's share_fact clause targeting me, plus
+  // any stranded fact reassigned to me (fix 7, world.factReassign -- see
+  // professor.html's Start Deals handler).
   function extraFactIdsFor(firmId) {
     var ids = [];
     DEALS.forEach(function (d) {
@@ -363,7 +366,76 @@
       var clauses = (d.terms && d.terms.reading && d.terms.reading.clauses) || [];
       clauses.forEach(function (c) { if (c.type === 'share_fact' && c.to === firmId) ids.push(c.fact); });
     });
+    var reassigned = (GAME.world && GAME.world.factReassign && GAME.world.factReassign[firmId]) || [];
+    reassigned.forEach(function (id) { ids.push(id); });
     return ids;
+  }
+
+  // {firmId: [factId, ...]} of facts each party CURRENTLY holds (original +
+  // reassigned + transferred via confirmed deals) -- BO8.readerContext does
+  // this engine-side math; used client-side (fix 4) both to warn in the fact
+  // picker before a student picks an invalid buyer, and to gate Send/Confirm
+  // against the same no-double-selling rule validateReading enforces.
+  function factsHeldIdsFor(parties) {
+    var e = engine();
+    if (!e || typeof e.readerContext !== 'function') return {};
+    try {
+      var ctx = e.readerContext(parties, engineState());
+      var out = {};
+      Object.keys(ctx.factsHeld || {}).forEach(function (fid) { out[fid] = (ctx.factsHeld[fid] || []).map(function (f) { return f.id; }); });
+      return out;
+    } catch (err) { return {}; }
+  }
+
+  // Runs BO8.validateReading on a reading we're about to mark 'read' or
+  // 'confirmed' WITHOUT the AI (fix 4): the extras-empty 'sell'/'chain'/
+  // 'fact' paths below never went through validateReading at all before,
+  // so a share_fact deal with an already-informed buyer sailed straight
+  // through. Returns {ok:true} if the engine isn't loaded yet (never block
+  // on a transient loading state).
+  function validateBeforeSend(reading, parties) {
+    var e = engine();
+    if (!e || typeof e.validateReading !== 'function') return { ok: true };
+    try {
+      return e.validateReading(reading, { parties: parties, writer: MY_ID, factsHeld: factsHeldIdsFor(parties), firmsInPool: firmsInPoolNow() });
+    } catch (err) { return { ok: true }; }
+  }
+
+  // Fix 2 (one pool per firm, 2026-10-06): firm ids already in a CONFIRMED
+  // profit pool right now, from the engine's own BO8.firmsInConfirmedPools
+  // (deterministic by deal creation/confirmation order -- "first pool wins").
+  // Passed as ctx.firmsInPool to validateReading everywhere a pool clause
+  // could be confirmed (compose/send and the inbox Confirm button below),
+  // which previously never wired firmsInPool at all, so a second pool for
+  // the same firm sailed through at confirm time.
+  function firmsInPoolNow() {
+    var e = engine();
+    if (!e || typeof e.firmsInConfirmedPools !== 'function') return [];
+    try { return e.firmsInConfirmedPools(engineState()); } catch (err) { return []; }
+  }
+
+  // Over-capacity warning (fix 2): for each party whose tier has a capacity
+  // (grower/processor/retailer), asks BO8.capacityStatus what their total
+  // committed units would be with checkClauses added on top of what they've
+  // already confirmed, and returns one plain-word warning sentence per firm
+  // that would end up over.
+  function capacityWarningsFor(parties, checkClauses) {
+    var e = engine();
+    if (!e || typeof e.capacityStatus !== 'function' || !checkClauses || !checkClauses.length) return [];
+    var warnings = [];
+    (parties || []).forEach(function (fid) {
+      var tier = C.tierOf(fid);
+      if (tier !== 'grower' && tier !== 'processor' && tier !== 'retailer') return;
+      var st;
+      try { st = e.capacityStatus(engineState(), fid, checkClauses); } catch (err) { return; }
+      if (st.overBy > 0) {
+        var unit = tier === 'grower' ? 'crop' : tier === 'processor' ? 'slot' : 'shelf space';
+        var verb = tier === 'grower' ? 'grow' : 'have';
+        warnings.push(cardName(fid) + ' would have promised ' + st.total + ' ' + unit + (st.total === 1 || tier === 'retailer' ? '' : 's') +
+          ' but ' + verb + ' only ' + st.cap + '. Extra promises will break at the end and cost the penalty.');
+      }
+    });
+    return warnings;
   }
 
   function render() {
@@ -440,6 +512,7 @@
       '<div class="muted" style="font-size:0.8rem;">YOUR FALLBACK</div>' +
       '<div>' + (card.fallback || []).join(' ') + '</div>' +
       '<div class="muted" style="font-size:0.8rem; margin-top:0.3rem;">All money is in thousands: $1,125k means $1.125 million.</div></div>';
+    html += renderCapacityBox();
     if (C.tierOf(MY_ID) === 'grower') html += renderCropBidBox();
     if (card.fits && card.fits.length) {
       var myGood = C.tierOf(MY_ID) === 'grower' ? 'crop' : 'product';
@@ -448,7 +521,15 @@
       }).join('') + '</ul></div>';
     }
     if (card.facts && card.facts.length) {
-      html += '<div class="facts-box"><h3>What you know <span class="q" title="True facts about bonuses some firms earn when they deal together. Only a few teams know each one. You can sell a fact, trade it, or keep it. Once you say it out loud, it is free.">?</span></h3><ul>' + card.facts.map(function (f) { return '<li>' + C.escapeHtml(f.text || f) + '</li>'; }).join('') + '</ul></div>';
+      html += '<div class="facts-box"><h3>What you know <span class="q" title="True facts about bonuses some firms earn when they deal together. Only a few teams know each one. You can sell a fact, trade it, or keep it. Once you say it out loud, it is free.">?</span></h3><ul>' + card.facts.map(function (f) {
+        var line = C.escapeHtml(f.text || f);
+        if (f.combo) {
+          var names = (f.combo.members || []).map(function (m) { return m.name; }).join(', ');
+          line += '<br><span class="muted" style="font-size:0.82rem;">About ' + C.escapeHtml(f.combo.label) + ' (' + C.escapeHtml(names) +
+            '). This is one of two clues to this combo; another firm holds the other one.</span>';
+        }
+        return '<li>' + line + '</li>';
+      }).join('') + '</ul></div>';
     }
     // ownFragment: this firm's own partial piece of a combo it's IN (engine8,
     // COMBOS-v8.md) -- a hint about its own hidden bonus, in the same plain,
@@ -456,6 +537,7 @@
     if (card.ownFragment && card.ownFragment.text) {
       html += '<div class="facts-box"><h3>Worth knowing about your own business</h3><p style="margin:0;">' + C.escapeHtml(card.ownFragment.text) + '</p></div>';
     }
+    html += renderRouteProgressBox();
     var pools = confirmedPoolsFor(MY_ID);
     if (pools.length) {
       html += '<div class="deal-preview">' + pools.map(poolSentence).join('<br>') + '</div>';
@@ -465,12 +547,70 @@
     if (sellBtn) sellBtn.addEventListener('click', sellToAiNow);
   }
 
+  // Recipe progress panel (fix 4, 2026-10-06): lists every combo this firm
+  // belongs to (BO8.routesFor), with the three member firms, the payout to
+  // THIS firm, and -- per required link -- whether a confirmed deal covers
+  // it yet. Uses BO8.comboProgress, the engine's own combo-completion logic
+  // (the same from/to/good structure resolve()'s combo step checks against
+  // actual deliveries), so this panel never disagrees with scoring. SUAXJ:
+  // every missed combo had at least one signed pairwise link, which is
+  // exactly the gap this panel surfaces.
+  function renderRouteProgressBox() {
+    var e = engine();
+    if (!e || typeof e.comboProgress !== 'function') return '';
+    var progress;
+    try { progress = e.comboProgress(engineState(), MY_ID); } catch (err) { return ''; }
+    if (!progress || !progress.length) return '';
+    var rows = progress.map(function (r) {
+      var links = r.links.map(function (l) {
+        return '<li>' + l.fromName + ' &rarr; ' + l.toName + ': ' + (l.signed ? '<strong>signed</strong>' : 'not yet') + '</li>';
+      }).join('');
+      var otherMembers = r.members.filter(function (m) { return m.id !== MY_ID; }).map(function (m) { return m.name; }).join(', ');
+      return '<li style="margin-bottom:0.5rem;"><strong>' + C.escapeHtml(r.label) + '</strong> (with ' + C.escapeHtml(otherMembers) + ') &mdash; '
+        + r.linksSigned + ' of ' + r.linksTotal + ' links signed' + (r.myAmount != null ? ', pays you extra if completed' : '') + '<ul>' + links + '</ul></li>';
+    }).join('');
+    return '<div class="facts-box"><h3>Your recipe progress <span class="q" title="Every combo you are part of, and whether each link in it has a signed deal yet. The combo pays only if every link actually delivers at the end.">?</span></h3><ul style="margin:0.3rem 0 0;">' + rows + '</ul></div>';
+  }
+
+  // Capacity readout (fix 1, 2026-10-06): "CROPS LEFT"/"SLOTS LEFT"/"SHELF
+  // LEFT" for every tier, computed by BO8.capacityStatus the SAME way
+  // resolve() counts at the end of the game (AI sales AND every confirmed
+  // deal's committed units), not just AI sales -- the old grower-only
+  // counter (cropsLockedCount) counted only AI sales and said nothing to
+  // processors/retailers at all. Also lists which deals use the capacity,
+  // and spells out plainly what happens if commitments already exceed it.
+  function renderCapacityBox() {
+    var e = engine();
+    if (!e || typeof e.capacityStatus !== 'function') return '';
+    var st;
+    try { st = e.capacityStatus(engineState(), MY_ID, []); } catch (err) { return ''; }
+    var tier = st.tier;
+    if (tier !== 'grower' && tier !== 'processor' && tier !== 'retailer') return '';
+    var label = tier === 'grower' ? 'CROPS LEFT' : tier === 'processor' ? 'SLOTS LEFT' : 'SHELF LEFT';
+    var unit = tier === 'grower' ? 'crop' : tier === 'processor' ? 'slot' : 'shelf space';
+    var left = Math.max(0, st.cap - st.committed);
+    var html = '<div class="panel" style="background:#faf7f0;">' +
+      '<div class="muted" style="font-size:0.8rem;">' + label + ': ' + left + ' OF ' + st.cap + '</div>';
+    if (st.committed > st.cap) {
+      var verb = tier === 'grower' ? 'grow' : 'have';
+      html += '<div class="reason" style="margin-top:0.3rem;">You have promised ' + st.committed + ' ' + unit + (st.committed === 1 || tier === 'retailer' ? '' : 's') +
+        ' but ' + verb + ' only ' + st.cap + '. Extra promises will break at the end and cost you the penalty.</div>';
+    }
+    if (st.dealsUsing && st.dealsUsing.length) {
+      html += '<ul style="margin:0.4rem 0 0; padding-left:1.2rem; font-size:0.85rem;">' + st.dealsUsing.map(function (d) {
+        return '<li>' + d.qty + ' with ' + cardName(d.partner) + '</li>';
+      }).join('') + '</ul>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   // A grower has CONST.GROWER_CAPACITY (2) crops. Each click of "Sell one
   // crop to the AI now" locks in ONE of them at the current bid (one
   // weed_decisions 'ai_sale' row per lock) -- so a grower can sell neither,
   // one, or both separately, keeping whichever it still holds free to
-  // deliver on a deal. "Crops left" is CAPACITY minus how many it has
-  // already locked in this game.
+  // deliver on a deal. The crops-left number itself now comes from
+  // renderCapacityBox (above), which also counts deal commitments.
   function renderCropBidBox() {
     var e = engine();
     var cap = (e && e.CONST && e.CONST.GROWER_CAPACITY) || 2;
@@ -480,8 +620,7 @@
     var elapsed = startedAt ? Math.max(0, (Date.now() - new Date(startedAt).getTime()) / 1000) : 0;
     var bid = (e && typeof e.aiCropBid === 'function') ? (function () { try { return e.aiCropBid(elapsed); } catch (err) { return null; } })() : null;
     var lockedSales = DECISIONS.filter(function (d) { return d.kind === 'ai_sale' && d.seat_index === MY.seat_index; });
-    var html = '<div class="panel" style="background:#faf7f0;">' +
-      '<div class="muted" style="font-size:0.8rem;">CROPS LEFT: ' + left + ' OF ' + cap + '</div>';
+    var html = '<div class="panel" style="background:#faf7f0;">';
     lockedSales.forEach(function (s) {
       html += '<div class="muted" style="font-size:0.85rem;">Sold one crop to the AI for ' + C.money(s.payload.bid) + '.</div>';
     });
@@ -548,7 +687,8 @@
     var f = d.terms.template.fields;
     var otherId = (d.terms.parties || []).filter(function (p) { return p !== MY_ID; })[0];
     var myShare = d.terms.writer === MY_ID ? f.myShare : (100 - f.myShare);
-    return 'You and ' + cardName(otherId) + ' add up your gains and split them ' + myShare + '/' + (100 - myShare) + '.';
+    return 'You and ' + cardName(otherId) + ' add up your gains. You keep ' + myShare + '% of the combined profit; '
+      + cardName(otherId) + ' keeps ' + (100 - myShare) + '%.';
   }
 
   function resetDealDraftFields() {
@@ -689,14 +829,29 @@
   }
 
   // How many crops this grower still has to offer right now (CAPACITY minus
-  // what it's already locked in to the AI) -- a crop slider must never let a
-  // deal promise more crops than the grower actually has.
+  // AI sales AND what it's already promised in confirmed deals -- fix 1,
+  // 2026-10-06: the old version only subtracted AI sales) -- a crop slider
+  // must never let a deal promise more crops than the grower actually has.
   function growerCropsLeftFor(growerId) {
     var e = engine();
     var cap = (e && e.CONST && e.CONST.GROWER_CAPACITY) || 2;
+    if (e && typeof e.capacityStatus === 'function') {
+      try { var st = e.capacityStatus(engineState(), growerId, []); return Math.max(0, st.cap - st.committed); } catch (err) {}
+    }
     var team = TEAMS.filter(function (t) { return t.archetype === growerId; })[0];
     if (!team) return cap;
     return Math.max(0, cap - C.cropsLockedCount(DECISIONS, team.seat_index));
+  }
+
+  // Same idea for a processor's remaining processing slots (fix 1: product
+  // deals had NO slider cap at all before this).
+  function processorSlotsLeftFor(processorId) {
+    var e = engine();
+    var cap = (e && e.CONST && e.CONST.PROCESSOR_CAPACITY) || 2;
+    if (e && typeof e.capacityStatus === 'function') {
+      try { var st = e.capacityStatus(engineState(), processorId, []); return Math.max(0, st.cap - st.committed); } catch (err) {}
+    }
+    return cap;
   }
 
   // Engine's CONST.SLIDERS is the only source of truth (ROUND2-CONTRACT.md
@@ -710,12 +865,30 @@
     if (dir.good === 'crop') {
       var left = growerCropsLeftFor(dir.from);
       qtyRange[1] = Math.max(qtyRange[0], Math.min(qtyRange[1], left || qtyRange[0]));
+    } else if (dir.good === 'product') {
+      // fix 1: a product deal's qty must be capped by the PROCESSOR's
+      // remaining slots too, same as a crop deal already was by the
+      // grower's remaining crops.
+      var leftP = processorSlotsLeftFor(dir.from);
+      qtyRange[1] = Math.max(qtyRange[0], Math.min(qtyRange[1], leftP || qtyRange[0]));
     }
     return {
       price: (dir.good === 'crop' ? R.crop.price : R.product.price),
       qty: [qtyRange[0], qtyRange[1], qtyRange[2] || 1, qtyRange[3] != null ? qtyRange[3] : qtyRange[0]],
       penalty: R.penalty
     };
+  }
+
+  // Default penalty scales with the deal's price (fix 8, 2026-10-06):
+  // CONST.PENALTY_DEFAULT_FRACTION of the price, rounded to the slider's own
+  // step, never below the slider's own minimum. Players can still move it;
+  // break math itself is unchanged.
+  function defaultPenaltyFor(price, penaltyRange) {
+    var e = engine();
+    var frac = (e && e.CONST && typeof e.CONST.PENALTY_DEFAULT_FRACTION === 'number') ? e.CONST.PENALTY_DEFAULT_FRACTION : 0.2;
+    var step = penaltyRange[2] || 25;
+    var rounded = Math.round((price || 0) * frac / step) * step;
+    return Math.max(penaltyRange[0], Math.min(penaltyRange[1], rounded));
   }
 
   function renderSellFields(box) {
@@ -725,7 +898,7 @@
     var S = sliderSet(dir);
     if (!S) { box.innerHTML = '<p class="muted">Engine loading...</p>'; return; }
     if (dealDraft.price == null) dealDraft.price = S.price[3];
-    if (dealDraft.penalty == null) dealDraft.penalty = S.penalty[3];
+    if (dealDraft.penalty == null) dealDraft.penalty = defaultPenaltyFor(dealDraft.price, S.penalty);
     if (dealDraft.qty == null || dealDraft.qty < S.qty[0] || dealDraft.qty > S.qty[1]) dealDraft.qty = S.qty[3];
     var qtyFixed = S.qty[0] === S.qty[1];
     var html = '';
@@ -775,7 +948,7 @@
     }
     if (dealDraft.cropPrice == null) dealDraft.cropPrice = R.crop.price[3];
     if (dealDraft.productPrice == null) dealDraft.productPrice = R.product.price[3];
-    if (dealDraft.chainPenalty == null) dealDraft.chainPenalty = R.penalty[3];
+    if (dealDraft.chainPenalty == null) dealDraft.chainPenalty = defaultPenaltyFor(dealDraft.cropPrice + dealDraft.productPrice, R.penalty);
     html += '<div class="slider-row"><label>Crop price<span class="valout" id="cropPriceOut">' + C.money(dealDraft.cropPrice) + '</span></label>' +
       '<input type="range" id="cropPriceSlider" min="' + R.crop.price[0] + '" max="' + R.crop.price[1] + '" step="' + R.crop.price[2] + '" value="' + dealDraft.cropPrice + '"></div>';
     html += '<div class="slider-row"><label>Product price<span class="valout" id="productPriceOut">' + C.money(dealDraft.productPrice) + '</span></label>' +
@@ -804,16 +977,24 @@
     if (!facts.length) { box.innerHTML = '<p class="reason">You don\'t hold any facts to sell right now.</p>'; return; }
     if (dealDraft.fact && !facts.some(function (f) { return f.id === dealDraft.fact; })) dealDraft.fact = null;
     if (!dealDraft.fact) dealDraft.fact = facts[0].id;
+    // fix 4: warn right in the picker if the chosen buyer already holds the
+    // selected fact (no double-selling), before the student even hits Send.
+    var heldIds = factsHeldIdsFor([MY_ID, dealDraft.partner]);
+    var partnerHeld = heldIds[dealDraft.partner] || [];
     var html = '<label for="factSelect">Which fact</label><select id="factSelect">' + facts.map(function (f) {
-      return '<option value="' + f.id + '"' + (dealDraft.fact === f.id ? ' selected' : '') + '>' + C.escapeHtml(f.text) + '</option>';
+      var optText = f.text + (f.combo ? ' (about ' + f.combo.label + ')' : '');
+      return '<option value="' + f.id + '"' + (dealDraft.fact === f.id ? ' selected' : '') + '>' + C.escapeHtml(optText) + '</option>';
     }).join('') + '</select>';
+    if (partnerHeld.indexOf(dealDraft.fact) !== -1) {
+      html += '<p class="reason" style="margin-top:0.4rem;">' + cardName(dealDraft.partner) + ' already knows this fact. It cannot be sold to them again; pick a different fact or a different buyer.</p>';
+    }
     var e = engine();
     var T = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES.fact;
     var priceRange = T && T.fields && T.fields.price;
     if (!priceRange) {
       html += '<p class="muted">Engine loading (price)...</p>';
       box.innerHTML = html;
-      document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderPreview(); });
+      document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderFactFields(box); });
       return;
     }
     if (dealDraft.factPrice == null) dealDraft.factPrice = priceRange[3];
@@ -821,7 +1002,7 @@
       '<input type="range" id="factPriceSlider" min="' + priceRange[0] + '" max="' + priceRange[1] + '" step="' + priceRange[2] + '" value="' + dealDraft.factPrice + '"></div>';
     html += '<div class="deal-preview" id="dealPreview"></div>';
     box.innerHTML = html;
-    document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderPreview(); });
+    document.getElementById('factSelect').addEventListener('change', function () { dealDraft.fact = this.value; renderFactFields(box); });
     document.getElementById('factPriceSlider').addEventListener('input', function () { dealDraft.factPrice = parseInt(this.value, 10); document.getElementById('factPriceOut').textContent = C.money(dealDraft.factPrice); renderPreview(); });
     renderPreview();
   }
@@ -836,12 +1017,46 @@
     var T = e && e.CONST && e.CONST.TEMPLATES && e.CONST.TEMPLATES.pool;
     var shareRange = (T && T.fields && T.fields.myShare) || [10, 90, 10, 50];
     if (dealDraft.myShare == null) dealDraft.myShare = shareRange[3];
-    var html = '<div class="slider-row"><label>Your share<span class="valout" id="myShareOut">' + dealDraft.myShare + '%</span></label>' +
-      '<input type="range" id="myShareSlider" min="' + shareRange[0] + '" max="' + shareRange[1] + '" step="' + shareRange[2] + '" value="' + dealDraft.myShare + '"></div>';
+    var partnerName = cardName(dealDraft.partner);
+    // fix 2: one confirmed pool per firm max -- warn here (and block at Send
+    // via validateBeforeSend) before the student spends time on a draft the
+    // engine will reject anyway.
+    var inPool = firmsInPoolNow();
+    var blocked = inPool.indexOf(MY_ID) !== -1 ? 'You are' : (inPool.indexOf(dealDraft.partner) !== -1 ? partnerName + ' is' : null);
+    var html = '';
+    if (blocked) {
+      html += '<p class="reason">' + blocked + ' already in a profit pool; a firm can only be in one.</p>';
+    }
+    html += '<div class="slider-row"><label>Your share<span class="valout" id="myShareOut">' + dealDraft.myShare + '%</span></label>' +
+      '<input type="range" id="myShareSlider" min="' + shareRange[0] + '" max="' + shareRange[1] + '" step="' + shareRange[2] + '" value="' + dealDraft.myShare + '"' + (blocked ? ' disabled' : '') + '>' +
+      '<div class="row" style="justify-content:space-between; font-size:0.8rem; color:var(--muted);"><span>You (' + dealDraft.myShare + '%)</span><span>' + C.escapeHtml(partnerName) + ' (' + (100 - dealDraft.myShare) + '%)</span></div></div>';
     html += '<div class="deal-preview" id="dealPreview"></div>';
     box.innerHTML = html;
-    document.getElementById('myShareSlider').addEventListener('input', function () { dealDraft.myShare = parseInt(this.value, 10); document.getElementById('myShareOut').textContent = dealDraft.myShare + '%'; renderPreview(); });
+    if (!blocked) {
+      document.getElementById('myShareSlider').addEventListener('input', function () { dealDraft.myShare = parseInt(this.value, 10); document.getElementById('myShareOut').textContent = dealDraft.myShare + '%'; renderPreview(); });
+    }
     renderPreview();
+  }
+
+  // Fix 3 (pool clarity): a before/after projection for a draft pool, using
+  // the real engine's project() on the current confirmed deals plus this
+  // one draft pool clause added as if confirmed -- never hand-computed.
+  // "exact projection isn't available client-side" doesn't apply here since
+  // project() IS available client-side, so this uses it directly rather than
+  // a separate engine API.
+  function poolBeforeAfterLine(partnerId, myShare) {
+    var e = engine();
+    if (!e || typeof e.project !== 'function' || typeof e.templateClauses !== 'function') return '';
+    try {
+      var state = engineState();
+      var before = e.project(state).firms;
+      var clauses = e.templateClauses(MY_ID, { type: 'pool', fields: { partner: partnerId, myShare: myShare } });
+      var draftDeal = { id: '__draft_pool__', status: 'confirmed', reading: { clauses: clauses } };
+      var afterState = Object.assign({}, state, { deals: (state.deals || []).concat([draftDeal]) });
+      var after = e.project(afterState).firms;
+      return 'Right now: you ' + C.signedMoney(before[MY_ID].gain) + ', ' + cardName(partnerId) + ' ' + C.signedMoney(before[partnerId].gain)
+        + '. With this pool: you ' + C.signedMoney(after[MY_ID].gain) + ', ' + cardName(partnerId) + ' ' + C.signedMoney(after[partnerId].gain) + '.';
+    } catch (err) { return ''; }
   }
 
   // One-line plain-English preview, phrased from MY side (lead: never a raw
@@ -869,8 +1084,15 @@
       var f = ((myCard && myCard.facts) || []).filter(function (x) { return x.id === dealDraft.fact; })[0];
       var priceText = dealDraft.factPrice ? ' for ' + C.money(dealDraft.factPrice) : ', free';
       sentence = 'You tell ' + cardName(dealDraft.partner) + ': "' + (f ? f.text : dealDraft.fact) + '"' + priceText + '.';
+      if (f && f.combo) {
+        var members = (f.combo.members || []).map(function (m) { return m.name; }).join(', ');
+        sentence += ' (About ' + f.combo.label + ': ' + members + '. One of two clues to this combo; another firm holds the other one.)';
+      }
     } else if (dealDraft.type === 'pool' && dealDraft.partner && dealDraft.myShare != null) {
-      sentence = 'You and ' + cardName(dealDraft.partner) + ' add up your gains and split them ' + dealDraft.myShare + '/' + (100 - dealDraft.myShare) + '.';
+      sentence = 'You and ' + cardName(dealDraft.partner) + ' add up your gains. You keep ' + dealDraft.myShare + '% of the combined profit; '
+        + cardName(dealDraft.partner) + ' keeps ' + (100 - dealDraft.myShare) + '%.';
+      var preview = poolBeforeAfterLine(dealDraft.partner, dealDraft.myShare);
+      if (preview) sentence += ' ' + preview;
     }
     el.textContent = sentence;
   }
@@ -948,10 +1170,40 @@
     document.getElementById('counterBanner').classList.add('hidden');
   }
 
+  // fix 2: signing-time over-capacity warning. Doesn't hard-block (unless
+  // CONST.OVERCAPACITY_HARD_BLOCK is flipped to true) -- it requires an
+  // explicit second click of Send on the SAME draft to go through, so
+  // deliberate hedging still works but an accidental extra click/overselling
+  // sees the warning first. Comparing against the built draft's own JSON
+  // means any change to the draft (price, qty, partner...) clears the ack.
+  var sendCapacityAckSignature = null;
   document.getElementById('sendDealBtn').addEventListener('click', function () {
     var built = buildTemplateAndParties();
     if (!built) { toast('Fill in the deal above first.', true); return; }
+    if (dealDraft.type === 'pool') {
+      var poolBlocked = firmsInPoolNow().filter(function (fid) { return built.parties.indexOf(fid) !== -1; });
+      if (poolBlocked.length) { toast(cardName(poolBlocked[0]) + ' is already in a profit pool; a firm can only be in one.', true); return; }
+    }
     var e = engine();
+    if (e && typeof e.capacityStatus === 'function') {
+      var checkClauses = [];
+      try {
+        if (dealDraft.type === 'sell' && typeof e.sliderClause === 'function') checkClauses = [e.sliderClause(MY_ID, built.template.fields)];
+        else if (dealDraft.type === 'chain' && typeof e.templateClauses === 'function') checkClauses = e.templateClauses(MY_ID, built.template);
+      } catch (err) { checkClauses = []; }
+      var warnings = capacityWarningsFor(built.parties, checkClauses);
+      if (warnings.length) {
+        var hardBlock = e.CONST && e.CONST.OVERCAPACITY_HARD_BLOCK;
+        if (hardBlock) { toast(warnings[0], true); return; }
+        var sig = JSON.stringify(built);
+        if (sendCapacityAckSignature !== sig) {
+          sendCapacityAckSignature = sig;
+          toast(warnings.join(' ') + ' Click Send again to sign anyway.', true);
+          return;
+        }
+      }
+    }
+    sendCapacityAckSignature = null;
     var extras = document.getElementById('extrasText').value.trim();
     var otherForSeat = built.parties.filter(function (p) { return p !== MY_ID; })[0];
     var otherSeat = TEAMS.filter(function (t) { return t.archetype === otherForSeat; })[0];
@@ -977,6 +1229,8 @@
         var reading;
         try { reading = e.readingFromSliders(MY_ID, sliders); }
         catch (err) { toast('Could not build that deal: ' + err.message, true); return; }
+        var sellCheck = validateBeforeSend(reading, built.parties);
+        if (!sellCheck.ok) { toast((sellCheck.errors && sellCheck.errors[0]) || 'That deal is not valid.', true); return; }
         row.status = 'read';
         sliderTerms.confirmations[MY_ID] = true;
         row.terms = Object.assign(sliderTerms, { text: '', reading: reading, reader: 'sliders' });
@@ -994,6 +1248,8 @@
         var reading2;
         try { reading2 = e.readingFromTemplate(MY_ID, built.template); }
         catch (err) { toast('Could not build that deal: ' + err.message, true); return; }
+        var tplCheck = validateBeforeSend(reading2, built.parties);
+        if (!tplCheck.ok) { toast((tplCheck.errors && tplCheck.errors[0]) || 'That deal is not valid.', true); return; }
         row.status = 'read';
         baseTerms.confirmations[MY_ID] = true;
         row.terms = Object.assign(baseTerms, { text: '', reading: reading2, reader: 'sliders' });
@@ -1073,10 +1329,19 @@
     return html;
   }
 
+  // Fix 5 (reader "question" dead end, 2026-10-06): a status-'question' deal
+  // with no question text left a student staring at an empty line and
+  // nothing to act on (SUAXJ: 10 such deals, only 1 had a real question).
+  // Always show a concrete next step, even if terms.question is empty --
+  // this is the same fallback wording reader.py now guarantees server-side,
+  // kept here too as a backstop for any older/edited row that slipped
+  // through without it.
+  var DEFAULT_QUESTION_FALLBACK = "The AI could not turn your extras into terms. Use the sliders for price, " +
+    "amount and penalty; extras can add a payment now, a condition on another deal, a fact, or a promise.";
   function renderQuestionCard(d) {
     var html = '<div class="deal-card incoming" data-deal="' + d.id + '">' +
       '<div><span class="chip warn">Question from the AI</span></div>' +
-      '<p>' + C.escapeHtml(d.terms.question || '') + '</p>' +
+      '<p>' + C.escapeHtml(d.terms.question || DEFAULT_QUESTION_FALLBACK) + '</p>' +
       '<textarea data-editbox="' + d.id + '" rows="3">' + C.escapeHtml(d.terms.text) + '</textarea>' +
       '<button data-resend="' + d.id + '" style="margin-top:0.4rem;">Resend to the AI</button></div>';
     return html;
@@ -1101,7 +1366,28 @@
     });
   }
 
+  // fix 2: the same over-capacity warning at CONFIRM time (the receiving
+  // side signs by confirming, not by sending) -- same second-click pattern,
+  // tracked per deal id since there's no live draft object here.
+  var confirmCapacityAck = {};
   function confirmReading(id) {
+    var pendingDeal = DEALS.filter(function (x) { return x.id === id; })[0];
+    if (pendingDeal) {
+      var e = engine();
+      if (e && typeof e.capacityStatus === 'function') {
+        var clauses = ((pendingDeal.terms.reading && pendingDeal.terms.reading.clauses) || []).filter(function (c) { return c.type === 'deliver'; });
+        var warnings = capacityWarningsFor([MY_ID], clauses);
+        if (warnings.length) {
+          var hardBlock = e.CONST && e.CONST.OVERCAPACITY_HARD_BLOCK;
+          if (hardBlock) { toast(warnings[0], true); return; }
+          if (!confirmCapacityAck[id]) {
+            confirmCapacityAck[id] = true;
+            toast(warnings.join(' ') + ' Click Confirm again to sign anyway.', true);
+            return;
+          }
+        }
+      }
+    }
     supa.from('weed_deals').select('*').eq('id', id).single().then(function (res) {
       if (res.error || !res.data) return;
       var d = res.data;
@@ -1109,6 +1395,23 @@
       terms.confirmations = terms.confirmations || {};
       terms.confirmations[MY_ID] = true;
       var newStatus = C.allPartiesConfirmed({ terms: terms }) ? 'confirmed' : 'read';
+      // fix 2: this confirmation would be the LAST one needed (newStatus
+      // 'confirmed') -- if the reading has a pool clause, block it here if
+      // either firm already landed in another confirmed pool since this one
+      // was sent (the same no-second-pool rule validateReading enforces at
+      // compose time, re-checked here because time has passed).
+      if (newStatus === 'confirmed') {
+        var hasPool = ((terms.reading && terms.reading.clauses) || []).some(function (c) { return c.type === 'pool'; });
+        if (hasPool) {
+          var e2 = engine();
+          if (e2 && typeof e2.validateReading === 'function') {
+            try {
+              var pv = e2.validateReading(terms.reading, { parties: terms.parties, firmsInPool: firmsInPoolNow() });
+              if (!pv.ok) { toast((pv.errors && pv.errors[0]) || 'This pool can no longer be confirmed.', true); return; }
+            } catch (err) { /* engine not ready; allow through, same as other checks here */ }
+          }
+        }
+      }
       supa.from('weed_deals').update({ terms: terms, status: newStatus }).eq('id', id).then(function (r2) {
         if (r2.error) { showMsg(r2.error.message, 'error'); return; }
         toast(newStatus === 'confirmed' ? 'Signed.' : 'Confirmed. Waiting on the other side.');
@@ -1120,6 +1423,20 @@
   function rejectReading(id) {
     supa.from('weed_deals').update({ status: 'declined' }).eq('id', id).then(function () {
       toast('Sent back. Nothing is signed.', true);
+      refreshDeals().then(render);
+    });
+  }
+
+  // Withdraw (fix 6, 2026-10-06): the sender can pull a deal before everyone
+  // has confirmed it. No schema change needed -- weed_deals.status is plain
+  // text with no CHECK constraint -- and the reader/resolve/professor
+  // pending-deal filters all key on specific statuses, so 'withdrawn' is
+  // already invisible to them.
+  var WITHDRAWABLE_STATUSES = ['written', 'reading', 'read', 'question'];
+  function withdrawDeal(id) {
+    supa.from('weed_deals').update({ status: 'withdrawn' }).eq('id', id).then(function (res) {
+      if (res.error) { showMsg(res.error.message, 'error'); return; }
+      toast('Withdrawn.', true);
       refreshDeals().then(render);
     });
   }
@@ -1171,6 +1488,9 @@
       var html = '<div class="deal-card ' + cls + '" data-mydeal="' + d.id + '">' +
         '<span class="chip ' + chipClass + '">' + chipLabel + '</span> with ' + (who || '...') +
         '<div class="muted" style="margin-top:0.3rem; font-size:0.88rem;">' + C.escapeHtml((d.terms.reading && d.terms.reading.summary) || d.terms.text) + '</div>';
+      if (d.terms.writer === MY_ID && WITHDRAWABLE_STATUSES.indexOf(d.status) !== -1) {
+        html += '<button class="secondary" data-withdraw="' + d.id + '" style="margin-top:0.4rem;">Withdraw</button>';
+      }
       var elapsed = C.readingElapsedMs(d);
       if (elapsed != null && elapsed > STUCK_READING_MS) {
         if (stuckEditExpanded[d.id]) {
@@ -1198,6 +1518,9 @@
         delete stuckEditExpanded[id];
         resendDeal(id, box2.value.trim());
       });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-withdraw]'), function (b) {
+      b.addEventListener('click', function () { withdrawDeal(b.getAttribute('data-withdraw')); });
     });
   }
 

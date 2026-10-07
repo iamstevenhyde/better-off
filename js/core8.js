@@ -225,14 +225,20 @@
 
   // ---- status chip label/class for a deal row, from the writer's or any
   // party's point of view (DESIGN-v8.md section 5 lifecycle). ----
+  // 'withdrawn' (fix 6, 2026-10-06): the sender pulled the deal before both
+  // sides confirmed it. weed_deals.status is plain text with no CHECK
+  // constraint (schema-weed.sql), so this needed no migration -- the
+  // reader/resolve/professor pending-deal filters all key on specific
+  // statuses ('written'/'reading' for the reader, 'confirmed' for resolve),
+  // so a withdrawn deal is already invisible to them without further code.
   var STATUS_LABEL = {
     written: 'Reading...', reading: 'Reading...', read: 'Confirm the reading',
     question: 'Question from the AI', confirmed: 'Signed', declined: 'Not agreed', voided: 'Voided by professor',
-    countered: 'Countered'
+    countered: 'Countered', withdrawn: 'Withdrawn'
   };
   var STATUS_CLASS = {
     written: 'wait', reading: 'wait', read: 'warn', question: 'warn', confirmed: 'ok', declined: 'bad', voided: 'bad',
-    countered: 'bad'
+    countered: 'bad', withdrawn: 'bad'
   };
   function statusLabel(d) { return STATUS_LABEL[d.status] || d.status; }
   function statusClass(d) { return STATUS_CLASS[d.status] || 'wait'; }
